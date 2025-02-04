@@ -37,6 +37,7 @@ namespace RobinsonMallLinkingWBOX
             this.configurationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
+            this.viewDataSentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -46,34 +47,35 @@ namespace RobinsonMallLinkingWBOX
             this.eODToolStripMenuItem,
             this.dateRangeToolStripMenuItem,
             this.configurationToolStripMenuItem,
+            this.viewDataSentToolStripMenuItem,
             this.exitToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(149, 92);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 136);
             // 
             // eODToolStripMenuItem
             // 
             this.eODToolStripMenuItem.Name = "eODToolStripMenuItem";
-            this.eODToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            this.eODToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.eODToolStripMenuItem.Text = "EOD";
             this.eODToolStripMenuItem.Click += new System.EventHandler(this.eODToolStripMenuItem_Click);
             // 
             // dateRangeToolStripMenuItem
             // 
             this.dateRangeToolStripMenuItem.Name = "dateRangeToolStripMenuItem";
-            this.dateRangeToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            this.dateRangeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.dateRangeToolStripMenuItem.Text = "Date Range";
             // 
             // configurationToolStripMenuItem
             // 
             this.configurationToolStripMenuItem.Name = "configurationToolStripMenuItem";
-            this.configurationToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            this.configurationToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.configurationToolStripMenuItem.Text = "Configuration";
             this.configurationToolStripMenuItem.Click += new System.EventHandler(this.configurationToolStripMenuItem_Click);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -86,6 +88,13 @@ namespace RobinsonMallLinkingWBOX
             this.notifyIcon1.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon1.Icon")));
             this.notifyIcon1.Text = "Mall Linking";
             this.notifyIcon1.Visible = true;
+            // 
+            // viewDataSentToolStripMenuItem
+            // 
+            this.viewDataSentToolStripMenuItem.Name = "viewDataSentToolStripMenuItem";
+            this.viewDataSentToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.viewDataSentToolStripMenuItem.Text = "View Data Sent";
+            this.viewDataSentToolStripMenuItem.Click += new System.EventHandler(this.viewDataSentToolStripMenuItem_Click);
             // 
             // frmMallLinking
             // 
@@ -111,6 +120,7 @@ namespace RobinsonMallLinkingWBOX
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.NotifyIcon notifyIcon1;
         private System.Windows.Forms.ToolStripMenuItem eODToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem viewDataSentToolStripMenuItem;
     }
 }
 

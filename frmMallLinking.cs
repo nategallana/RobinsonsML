@@ -262,6 +262,11 @@ namespace RobinsonMallLinkingWBOX
             }
         }
 
+        private void viewDataSentToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
         private void eODToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Scenarios();
