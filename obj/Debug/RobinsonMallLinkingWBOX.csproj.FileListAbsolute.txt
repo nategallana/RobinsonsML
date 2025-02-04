@@ -22,3 +22,13 @@ C:\Users\ERP\Desktop\Julius Backup\Mall Linking\Robinson\RobinsonMallLinkingWBOX
 C:\Users\ERP\Desktop\Julius Backup\Mall Linking\Robinson\RobinsonMallLinkingWBOX\obj\Debug\RobinsonMallLinkingWBOX.exe
 C:\Users\ERP\Desktop\Julius Backup\Mall Linking\Robinson\RobinsonMallLinkingWBOX\obj\Debug\RobinsonMallLinkingWBOX.pdb
 C:\Users\ERP\Desktop\Julius Backup\Mall Linking\Robinson\RobinsonMallLinkingWBOX\obj\Debug\RobinsonMallLinkingWBOX.csproj.AssemblyReference.cache
+E:\HDrive\New folder\Program\WBOX Rob Mall Linking\Robinson\RobinsonMallLinkingWBOX\obj\Debug\RobinsonMallLinkingWBOX.csproj.AssemblyReference.cache
+E:\HDrive\New folder\Program\WBOX Rob Mall Linking\Robinson\RobinsonMallLinkingWBOX\obj\Debug\Interop.InteropExtensionLib.dll
+E:\HDrive\New folder\Program\WBOX Rob Mall Linking\Robinson\RobinsonMallLinkingWBOX\obj\Debug\RobinsonMallLinkingWBOX.csproj.ResolveComReference.cache
+E:\HDrive\New folder\Program\WBOX Rob Mall Linking\Robinson\RobinsonMallLinkingWBOX\obj\Debug\RobinsonMallLinkingWBOX.frmMallLinking.resources
+E:\HDrive\New folder\Program\WBOX Rob Mall Linking\Robinson\RobinsonMallLinkingWBOX\obj\Debug\RobinsonMallLinkingWBOX.Properties.Resources.resources
+E:\HDrive\New folder\Program\WBOX Rob Mall Linking\Robinson\RobinsonMallLinkingWBOX\obj\Debug\RobinsonMallLinkingWBOX.Settings.resources
+E:\HDrive\New folder\Program\WBOX Rob Mall Linking\Robinson\RobinsonMallLinkingWBOX\obj\Debug\RobinsonMallLinkingWBOX.csproj.GenerateResource.cache
+E:\HDrive\New folder\Program\WBOX Rob Mall Linking\Robinson\RobinsonMallLinkingWBOX\obj\Debug\RobinsonMallLinkingWBOX.csproj.CoreCompileInputs.cache
+E:\HDrive\New folder\Program\WBOX Rob Mall Linking\Robinson\RobinsonMallLinkingWBOX\obj\Debug\RobinsonMallLinkingWBOX.exe
+E:\HDrive\New folder\Program\WBOX Rob Mall Linking\Robinson\RobinsonMallLinkingWBOX\obj\Debug\RobinsonMallLinkingWBOX.pdb

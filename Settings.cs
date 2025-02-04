@@ -18,7 +18,7 @@ namespace RobinsonMallLinkingWBOX
         public SettingsWriter _settings = null;
         public static Configuration _systemConfig = new Configuration();
 
-        static string XML, host, uname, pword, dir, tname, terno, tempmdb = null;
+        static string XML, host, uname, pword, dir, tname, terno, tempmdb, ssh = null;
 
         public Settings()
         {
@@ -47,6 +47,7 @@ namespace RobinsonMallLinkingWBOX
                 txtTenantName.Text = _systemConfig.TenantName.Trim().ToString();
                 txtTerminal.Text = _systemConfig.TerminalNo.Trim().ToString();
                 txtTempDB.Text = _systemConfig.TempMDB.Trim().ToString();
+                txtSSHKey.Text = _systemConfig.SSHKey.Trim().ToString();
             }
         }
 
@@ -63,7 +64,8 @@ namespace RobinsonMallLinkingWBOX
                     Directory = txtDrctry.Text.Trim().ToString(),
                     TenantName = txtTenantName.Text.Trim().ToString(),
                     TerminalNo = txtTerminal.Text.Trim().ToString(),
-                    TempMDB = txtTempDB.Text.Trim().ToString()
+                    TempMDB = txtTempDB.Text.Trim().ToString(),
+                    SSHKey = txtSSHKey.Text.Trim().ToString()
                 };
             }
         }
@@ -82,5 +84,6 @@ namespace RobinsonMallLinkingWBOX
         public static string TENANTNAME { get => tname; set => tname = value.ToString(); }
         public static string TERMINALNO { get => terno; set => terno = value.ToString(); }
         public static string TEMPMDB { get => tempmdb; set => tempmdb = value.ToString(); } 
+        public static string SSH { get => ssh; set => ssh = value.ToString(); }
     }
 }

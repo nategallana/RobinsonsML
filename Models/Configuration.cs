@@ -16,5 +16,6 @@ namespace RobinsonMallLinkingWBOX.Models
         public string TenantName { get; set; }
         public string TerminalNo { get; set; }
         public string TempMDB { get; set; }
+        public string SSHKey { get; set; }
     }
 }
