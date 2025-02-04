@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <XMLPath>C:\Restrnt\XMLOut</XMLPath>
+  <Host>rlccloud.robinsonsland.com</Host>
+  <Username>accredit</Username>
+  <Password>RLC@Partners</Password>
+  <Directory>C:\Users\ERP\Desktop\Julius Backup\CSV\Robinson</Directory>
+  <TenantName>123456789</TenantName>
+  <TerminalNo>01</TerminalNo>
+  <TempMDB>C:\Restrnt\Z-Reading\TempDB.mdb</TempMDB>
+</Configuration>
