@@ -52,6 +52,8 @@ namespace RobinsonMallLinkingWBOX
             this.label2 = new System.Windows.Forms.Label();
             this.btnSave = new System.Windows.Forms.Button();
             this.panel5 = new System.Windows.Forms.Panel();
+            this.label9 = new System.Windows.Forms.Label();
+            this.txtSSHKey = new System.Windows.Forms.TextBox();
             this.tabControl1.SuspendLayout();
             this.tabPage3.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -68,7 +70,7 @@ namespace RobinsonMallLinkingWBOX
             this.tabControl1.Location = new System.Drawing.Point(12, 12);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(376, 155);
+            this.tabControl1.Size = new System.Drawing.Size(376, 182);
             this.tabControl1.TabIndex = 3;
             // 
             // tabPage3
@@ -80,7 +82,7 @@ namespace RobinsonMallLinkingWBOX
             this.tabPage3.Location = new System.Drawing.Point(4, 25);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(368, 126);
+            this.tabPage3.Size = new System.Drawing.Size(368, 153);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Tenant Details";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -130,7 +132,7 @@ namespace RobinsonMallLinkingWBOX
             this.tabPage1.Location = new System.Drawing.Point(4, 25);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(368, 126);
+            this.tabPage1.Size = new System.Drawing.Size(368, 153);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "WBOX API";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -173,6 +175,8 @@ namespace RobinsonMallLinkingWBOX
             // 
             // tabPage2
             // 
+            this.tabPage2.Controls.Add(this.txtSSHKey);
+            this.tabPage2.Controls.Add(this.label9);
             this.tabPage2.Controls.Add(this.txtDrctry);
             this.tabPage2.Controls.Add(this.label5);
             this.tabPage2.Controls.Add(this.txtPword);
@@ -184,7 +188,7 @@ namespace RobinsonMallLinkingWBOX
             this.tabPage2.Location = new System.Drawing.Point(4, 25);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(368, 126);
+            this.tabPage2.Size = new System.Drawing.Size(368, 153);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "SFTP Setup";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -283,22 +287,41 @@ namespace RobinsonMallLinkingWBOX
             this.panel5.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.panel5.BackColor = System.Drawing.Color.DarkGreen;
             this.panel5.Controls.Add(this.btnSave);
-            this.panel5.Location = new System.Drawing.Point(268, 176);
+            this.panel5.Location = new System.Drawing.Point(256, 200);
             this.panel5.Name = "panel5";
             this.panel5.Size = new System.Drawing.Size(119, 40);
             this.panel5.TabIndex = 39;
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Font = new System.Drawing.Font("Century Gothic", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label9.Location = new System.Drawing.Point(40, 121);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(59, 17);
+            this.label9.TabIndex = 8;
+            this.label9.Text = "SSH Key:";
+            // 
+            // txtSSHKey
+            // 
+            this.txtSSHKey.Font = new System.Drawing.Font("Century Gothic", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtSSHKey.Location = new System.Drawing.Point(124, 118);
+            this.txtSSHKey.Name = "txtSSHKey";
+            this.txtSSHKey.Size = new System.Drawing.Size(205, 23);
+            this.txtSSHKey.TabIndex = 9;
             // 
             // Settings
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(399, 229);
+            this.ClientSize = new System.Drawing.Size(387, 248);
             this.Controls.Add(this.panel5);
             this.Controls.Add(this.tabControl1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Settings";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Settings";
+            this.Load += new System.EventHandler(this.Settings_Load);
             this.tabControl1.ResumeLayout(false);
             this.tabPage3.ResumeLayout(false);
             this.tabPage3.PerformLayout();
@@ -335,5 +358,7 @@ namespace RobinsonMallLinkingWBOX
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Panel panel5;
+        private System.Windows.Forms.TextBox txtSSHKey;
+        private System.Windows.Forms.Label label9;
     }
 }

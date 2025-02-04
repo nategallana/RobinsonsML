@@ -70,6 +70,10 @@ namespace RobinsonMallLinkingWBOX
 
         public static string XMLPath { get => XML; set => XML = value.ToString(); }
 
+        private void Settings_Load(object sender, EventArgs e)
+        {
+
+        }
 
         public static string HOST { get => host; set => host = value.ToString(); }
         public static string USERNAME { get => uname; set => uname = value.ToString(); }
