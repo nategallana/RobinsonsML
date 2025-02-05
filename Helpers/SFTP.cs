@@ -87,6 +87,12 @@ namespace RobinsonMallLinkingWBOX.Helpers
                         PortNumber = 22,
                         TimeoutInMilliseconds = 60000
                     };
+                    session.Open(SessionOptions1);
+                    string remoteFilePath = filepath;
+                    TransferOptions transferOptions = new TransferOptions { TransferMode = TransferMode.Ascii };
+
+                    TransferOperationResult transferResult = session.PutFiles(filepath, remoteFilePath, false, transferOptions);
+                    transferResult.Check();
                 }
             }
         }
