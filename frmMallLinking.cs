@@ -618,18 +618,17 @@ namespace RobinsonMallLinkingWBOX
                 string batchDate = DateTime.Today.ToString("MMM-dd-yyyy");
                 string batchTime = DateTime.Now.ToString("hh-mm-tt");
 
-                //int batchCount;
+                int batchCount=1;
 
-                //var batchfile = new BatchFile
-                //{
-                //    FileName = fileName,
-                //    TransDate = batchDate,
-                //    TransTime = batchTime,
-                //    Status = "Open",
-                //    Count = 1
-                //};
+                var batchfile = new BatchFile
+                {
+                    FileName = fileName,
+                    TransDate = batchDate,
+                    TransTime = batchTime,
+                    Count = batchCount
+                };
 
-                //batchfileDataStorage.Add(batchfile, false);
+                batchfileDataStorage.Add(batchfile, false);
 
                 // Generate Fixed-Width File
                 GenerateFixedWidthFile(EODSLS, folderPath, fileName);
@@ -657,27 +656,6 @@ namespace RobinsonMallLinkingWBOX
             if (!Directory.Exists(folderPath))
             {
                 Directory.CreateDirectory(folderPath);
-            }
-
-            DataTable checkBatchFileName = batchfileDataStorage.CheckBatchFileName();
-
-            bool fileExists = false;
-            foreach (DataRow row in checkBatchFileName.Rows)
-            {
-                string existingFileName = row["FileName"].ToString();
-                if (existingFileName == fileName)
-                {
-                    fileExists = true; 
-                    break;
-                }
-            }
-            if (fileExists)
-            {
-                Console.WriteLine("The file name already exists in the table.");
-            }
-            else
-            {
-                Console.WriteLine("The file name does not exist in the table.");
             }
 
             // Combine folder path and file name to get the full file path

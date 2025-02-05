@@ -72,6 +72,30 @@ namespace RobinsonMallLinkingWBOX.Helpers
             }
         }
 
+        public void SftpTrans(string filepath,string sftpHost, string sftpUsername, string sftpPassword)
+        {
+            if(CheckSftpConnection())
+            {
+                using (Session session = new Session())
+                {
+                    SessionOptions1 = new SessionOptions
+                    {
+                        Protocol = Protocol.Sftp,
+                        HostName = sftpHost,
+                        UserName = sftpUsername,
+                        Password = sftpPassword,
+                        PortNumber = 22,
+                        TimeoutInMilliseconds = 60000
+                    };
+                    session.Open(SessionOptions1);
+                    string remoteFilePath = filepath;
+                    TransferOptions transferOptions = new TransferOptions { TransferMode = TransferMode.Ascii };
+
+                    TransferOperationResult transferResult = session.PutFiles(filepath, remoteFilePath, false, transferOptions);
+                    transferResult.Check();
+                }
+            }
+        }
         public static bool CheckSftpConnection()
         {
             try
