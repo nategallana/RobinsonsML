@@ -75,5 +75,6 @@ namespace RobinsonMallLinkingWBOX.Constants
                                                    WHERE 
                                                         DATE({1}) = '{2}'";
 
+
     }
 }
