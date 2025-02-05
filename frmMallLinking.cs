@@ -618,7 +618,7 @@ namespace RobinsonMallLinkingWBOX
                 string batchDate = DateTime.Today.ToString("MMM-dd-yyyy");
                 string batchTime = DateTime.Now.ToString("hh-mm-tt");
 
-                int batchCount=0;
+                int batchCount=1;
 
                 var batchfile = new BatchFile
                 {
