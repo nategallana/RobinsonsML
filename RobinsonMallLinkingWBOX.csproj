@@ -91,6 +91,12 @@
   <ItemGroup>
     <Compile Include="Constants\Queries.cs" />
     <Compile Include="Constants\TempDBName.cs" />
+    <Compile Include="FileView.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FileView.Designer.cs">
+      <DependentUpon>FileView.cs</DependentUpon>
+    </Compile>
     <Compile Include="frmMallLinking.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -137,6 +143,9 @@
     <Compile Include="Settings.Designer.cs">
       <DependentUpon>Settings.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="FileView.resx">
+      <DependentUpon>FileView.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="frmMallLinking.resx">
       <DependentUpon>frmMallLinking.cs</DependentUpon>
     </EmbeddedResource>
