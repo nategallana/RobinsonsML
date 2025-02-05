@@ -75,5 +75,10 @@ namespace RobinsonMallLinkingWBOX.Constants
                                                    WHERE 
                                                         DATE({1}) = '{2}'";
 
+        public const string SELECT_BATCHNAME = @"SELECT
+                                                    batchfile.FileName 
+                                                FROM 
+                                                    batchfile";
+
     }
 }

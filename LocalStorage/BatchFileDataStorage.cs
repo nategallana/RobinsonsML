@@ -1,7 +1,9 @@
-﻿using RobinsonMallLinkingWBOX.Helpers;
+﻿using RobinsonMallLinkingWBOX.Constants;
+using RobinsonMallLinkingWBOX.Helpers;
 using RobinsonMallLinkingWBOX.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,5 +17,11 @@ namespace RobinsonMallLinkingWBOX.LocalStorage
         {
             CreateTable(new BatchFile());
         }
+        public DataTable CheckBatchFileName()
+        {
+            string query = string.Format(Queries.SELECT_BATCHNAME);
+            return GetDataTable(query);
+        }
     }
+
 }
