@@ -17,13 +17,13 @@ namespace RobinsonMallLinkingWBOX.Models
         public string FileName { get; set; }
 
         [DbColumn(ColumnType = ColType.Integer, NotNull = true)]
-        public string Count { get; set; }
+        public int Count { get; set; }
 
         [DbColumn(ColumnType = ColType.Text, NotNull = true)]
-        public decimal TransDate { get; set; }
+        public string TransDate { get; set; }
 
         [DbColumn(ColumnType = ColType.Text, NotNull = true)]
-        public decimal TransTime { get; set; }
+        public string TransTime { get; set; }
 
         [DbColumn(ColumnType = ColType.Text, NotNull = true)]
         public string Status { get; set; }
