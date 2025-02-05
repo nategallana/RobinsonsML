@@ -114,6 +114,7 @@
     <Compile Include="LocalStorage\TaxDataStorage.cs" />
     <Compile Include="LocalStorage\TransactionsDataStorage.cs" />
     <Compile Include="LocalStorage\VoidDataStorage.cs" />
+    <Compile Include="Models\BatchFile.cs" />
     <Compile Include="Models\Configuration.cs" />
     <Compile Include="Models\DiscountData.cs" />
     <Compile Include="Models\EODData.cs" />
