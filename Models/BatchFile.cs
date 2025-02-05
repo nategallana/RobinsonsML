@@ -19,10 +19,10 @@ namespace RobinsonMallLinkingWBOX.Models
         [DbColumn(ColumnType = ColType.Integer, NotNull = true)]
         public string Count { get; set; }
 
-        [DbColumn(ColumnType = ColType.DateTime, NotNull = true)]
+        [DbColumn(ColumnType = ColType.Text, NotNull = true)]
         public decimal TransDate { get; set; }
 
-        [DbColumn(ColumnType = ColType.DateTime, NotNull = true)]
+        [DbColumn(ColumnType = ColType.Text, NotNull = true)]
         public decimal TransTime { get; set; }
 
         [DbColumn(ColumnType = ColType.Text, NotNull = true)]

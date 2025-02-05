@@ -613,7 +613,21 @@ namespace RobinsonMallLinkingWBOX
                 string lastTransac = yyyymmdd.Substring(yyyymmdd.Length - 4);
 
                 string folderPath = dir;
-                string fileName = lastFourDigits + lastTransac + "." + EODTERMNO + "1";
+                string fileName = lastFourDigits + lastTransac + "." + EODTERMNO;
+
+                string batchDate = DateTime.Today.ToString("MMM-dd-yyyy");
+                string batchTime = DateTime.Now.ToString("hh-mm-tt");
+
+
+                var batchfile = new BatchFile
+                {
+                    FileName = fileName,
+                    TransDate = batchDate,
+                    TransTime = batchTime,
+                    Amount = amount
+                };
+
+               batchfileDataStorage.Add(batchfile, false);
 
                 // Generate Fixed-Width File
                 GenerateFixedWidthFile(EODSLS, folderPath, fileName);
