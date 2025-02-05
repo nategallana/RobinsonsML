@@ -106,6 +106,7 @@
     <Compile Include="Helpers\Strings.cs" />
     <Compile Include="LocalStorage\Attributes\DbColumnAttribute.cs" />
     <Compile Include="LocalStorage\BaseStorage.cs" />
+    <Compile Include="LocalStorage\BatchFileDataStorage.cs" />
     <Compile Include="LocalStorage\DiscountDataStorage.cs" />
     <Compile Include="LocalStorage\EODDataStorage.cs" />
     <Compile Include="LocalStorage\EODSLSDataStorage.cs" />

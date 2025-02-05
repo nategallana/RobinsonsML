@@ -26,6 +26,7 @@ namespace RobinsonMallLinkingWBOX
         #region --
         public string _databaseFileName = Path.Combine(Application.StartupPath, TempDBName.DATABASE);
         public TransactionsDataStorage transactionDataStorage = null;
+        public BatchFileDataStorage batchfileDataStorage = null;
         public DiscountDataStorage discountDataStorage = null;
         public ItemDataStorage itemDataStorage = null;
         public PaymentDataStorage paymentDataStorage = null;
@@ -106,6 +107,7 @@ namespace RobinsonMallLinkingWBOX
             try
             {
                 Program.DatabaseFile = _databaseFileName;
+                batchfileDataStorage = new BatchFileDataStorage();
                 transactionDataStorage = new TransactionsDataStorage();
                 discountDataStorage = new DiscountDataStorage();
                 itemDataStorage = new ItemDataStorage();

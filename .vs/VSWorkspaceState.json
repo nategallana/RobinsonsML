@@ -1,6 +1,8 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\Models"
   ],
+  "SelectedNode": "\\Models\\BatchFile.cs",
   "PreviewInSolutionExplorer": false
 }
