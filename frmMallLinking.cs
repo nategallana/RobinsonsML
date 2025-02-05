@@ -619,13 +619,16 @@ namespace RobinsonMallLinkingWBOX
                 string batchTime = DateTime.Now.ToString("hh-mm-tt");
 
                 int batchCount=1;
+                string status = "Open";
 
                 var batchfile = new BatchFile
                 {
                     FileName = fileName,
                     TransDate = batchDate,
                     TransTime = batchTime,
-                    Count = batchCount
+                    Count = batchCount,
+                    Status = status
+
                 };
 
                 batchfileDataStorage.Add(batchfile, false);
@@ -652,10 +655,32 @@ namespace RobinsonMallLinkingWBOX
         #region Generate EOD Textfile
         private void GenerateFixedWidthFile(EODSLSData eodData, string folderPath, string fileName)
         {
-            // Ensure the folder exists; create it if it doesn't
+
             if (!Directory.Exists(folderPath))
             {
                 Directory.CreateDirectory(folderPath);
+            }
+
+            DataTable checkBatchFileName = batchfileDataStorage.CheckBatchFileName();
+
+            bool fileExists = false;
+            foreach (DataRow row in checkBatchFileName.Rows)
+            {
+                string existingFileName = row["FileName"].ToString(); 
+                if (existingFileName == fileName)
+                {
+                    fileExists = true;
+                    break;
+                }
+            }
+
+            if (fileExists)
+            {
+                Console.WriteLine("The file name already exists in the table.");
+            }
+            else
+            {
+                Console.WriteLine("The file name does not exist in the table.");
             }
 
             // Combine folder path and file name to get the full file path
