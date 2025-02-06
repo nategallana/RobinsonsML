@@ -266,7 +266,8 @@ namespace RobinsonMallLinkingWBOX
 
         private void viewDataSentToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            Form _frm = new FileView();
+            _frm.Show();
         }
 
         private void eODToolStripMenuItem_Click(object sender, EventArgs e)
