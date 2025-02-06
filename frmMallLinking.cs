@@ -642,7 +642,7 @@ namespace RobinsonMallLinkingWBOX
             string batchTime = DateTime.Now.ToString("hh-mm-tt");
 
             int batchCount = 0;
-            string status = "Open";
+            string status = "sent";
 
             if (!Directory.Exists(folderPath))
             {

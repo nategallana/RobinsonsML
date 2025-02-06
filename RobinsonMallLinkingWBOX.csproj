@@ -97,6 +97,12 @@
     <Compile Include="FileView.Designer.cs">
       <DependentUpon>FileView.cs</DependentUpon>
     </Compile>
+    <Compile Include="frmDateRange.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmDateRange.Designer.cs">
+      <DependentUpon>frmDateRange.cs</DependentUpon>
+    </Compile>
     <Compile Include="frmMallLinking.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -145,6 +151,9 @@
     </Compile>
     <EmbeddedResource Include="FileView.resx">
       <DependentUpon>FileView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmDateRange.resx">
+      <DependentUpon>frmDateRange.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="frmMallLinking.resx">
       <DependentUpon>frmMallLinking.cs</DependentUpon>
