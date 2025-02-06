@@ -270,6 +270,11 @@ namespace RobinsonMallLinkingWBOX
             _frm.Show();
         }
 
+        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+
+        }
+
         private void eODToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Scenarios();
@@ -638,11 +643,12 @@ namespace RobinsonMallLinkingWBOX
         #region Generate EOD Textfile
         private void GenerateFixedWidthFile(EODSLSData eodData, string folderPath, string fileName)
         {
+            SFTP sftpClient = new SFTP();
             string batchDate = DateTime.Today.ToString("MMM-dd-yyyy");
             string batchTime = DateTime.Now.ToString("hh-mm-tt");
 
             int batchCount = 0;
-            string status = "Open";
+            string status = "sent";
 
             if (!Directory.Exists(folderPath))
             {
@@ -739,6 +745,8 @@ namespace RobinsonMallLinkingWBOX
                 writer.WriteLine($"30{eodData.NoRePrnt.ToString().PadLeft(totalWidth - 2, '0')}");
 
             }
+
+            sftpClient.SftpTrans(fullFilePath, host, username, password);
         }
         #endregion
 
