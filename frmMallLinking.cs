@@ -85,6 +85,7 @@ namespace RobinsonMallLinkingWBOX
         public string YESTERDAY_YYYYMMDD;
         #endregion
         SFTP sftp2 = new SFTP();
+        private static NotifyIcon _notifyIcon;
         public frmMallLinking()
         {
             InitializeComponent();
@@ -621,9 +622,17 @@ namespace RobinsonMallLinkingWBOX
                 string folderPath = dir;
                 string fileName = lastFourDigits + lastTransac + "." + EODTERMNO;
 
+                List<string> filePaths = new List<string>();
                 // Generate Fixed-Width File
-                GenerateFixedWidthFile(EODSLS, folderPath, fileName);
+                GenerateFixedWidthFile(EODSLS, folderPath, fileName, filePaths);
 
+                int batchSize = 5; // Example: Batch size of 5
+                for (int i = 0; i < filePaths.Count; i += batchSize)
+                {
+                    List<string> batchFiles = filePaths.GetRange(i, Math.Min(batchSize, filePaths.Count - i));
+                    SendFilesInBatch(batchFiles);
+                }
+                CheckFileSendingStatus();
                 #region Notif
                 // Simulate sending sales file to server
                 //if (SendSalesFileToServer())
@@ -643,9 +652,9 @@ namespace RobinsonMallLinkingWBOX
         }
 
         #region Generate EOD Textfile
-        private void GenerateFixedWidthFile(EODSLSData eodData, string folderPath, string fileName)
+        private void GenerateFixedWidthFile(EODSLSData eodData, string folderPath, string fileName, List<string>filePaths)
         {
-            SFTP sftpClient = new SFTP();
+            //SFTP sftpClient = new SFTP();
             string batchDate = DateTime.Today.ToString("MMM-dd-yyyy");
             string batchTime = DateTime.Now.ToString("hh-mm-tt");
 
@@ -747,11 +756,17 @@ namespace RobinsonMallLinkingWBOX
                 writer.WriteLine($"30{eodData.NoRePrnt.ToString().PadLeft(totalWidth - 2, '0')}");
 
             }
-
-            sftpClient.SftpTrans(fullFilePath, host, username, password);
+            filePaths.Add(fullFilePath);
+            //sftpClient.SftpTrans(fullFilePath, host, username, password);
         }
         #endregion
-
+        private void SendFilesInBatch(List<string> filePaths)
+        {
+            foreach(string filePath in filePaths)
+            {
+                SendSalesFileToServer(filePath);
+            }
+        }
         private void SendSalesFileToServer(string filepath)
         {
             // Simulate server communication (replace with actual logic)
@@ -773,7 +788,23 @@ namespace RobinsonMallLinkingWBOX
             }
         }
         #endregion
-
+        private void CheckFileSendingStatus()
+        {
+            if(GlobalVar.SuccessSending)
+            {
+                _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Sale file Successfully sent to RLC server", ToolTipIcon.Info);
+                this.Close();
+            }
+            else if (GlobalVar.SuccessSending2 && !GlobalVar.SuccessSending)
+            {
+                _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Trying to send unsent files...Successfully", ToolTipIcon.Info);
+            }
+            else
+            {
+                _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Sales file is not sent to RLC server. Please contact your POS vendor", ToolTipIcon.Error);
+                //SftpConnectionChecker.StartChecking();
+            }
+        }
         #region Transaction Logic
         public void checkEODpreviousDates() 
         {
