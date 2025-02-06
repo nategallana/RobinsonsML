@@ -90,6 +90,7 @@ namespace RobinsonMallLinkingWBOX
             this.Controls.Add(this.dgv_Data);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "FileView";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "FileView";
             this.Load += new System.EventHandler(this.FileView_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgv_Data)).EndInit();
