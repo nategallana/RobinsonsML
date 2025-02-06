@@ -45,5 +45,6 @@ namespace RobinsonMallLinkingWBOX.Models
         public static bool SuccessSending { get; set; }
         public static bool SuccessSending2 { get; set; }
         public static bool ErrorSending { get; set; }
+        public static int batchcount { get; set; }
     }
 }

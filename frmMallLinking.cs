@@ -982,6 +982,7 @@ namespace RobinsonMallLinkingWBOX
 
                 for (DateTime date = start; date <= end; date = date.AddDays(1))
                 {
+
                     string mmddyyyy = date.ToString("MMddyyyy");
                     string yyyymmdd = date.ToString("yyyyMMdd");
                     string yesterday = date.AddDays(-1).ToString("yyyyMMdd");
