@@ -101,6 +101,7 @@ namespace RobinsonMallLinkingWBOX
 
             InitializeEODHandler();
             InitializeAppCloseHandler();
+            InitializeFolder();
         }
         private void InitializeFolder()
         {

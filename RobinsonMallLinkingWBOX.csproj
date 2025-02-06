@@ -112,6 +112,7 @@
     <Compile Include="Helpers\DecimalExtensions.cs" />
     <Compile Include="Helpers\EntityConversion.cs" />
     <Compile Include="Helpers\ErrorLogger.cs" />
+    <Compile Include="Helpers\Logdata.cs" />
     <Compile Include="Helpers\ObjectFormatter.cs" />
     <Compile Include="Helpers\SettingsWriter.cs" />
     <Compile Include="Helpers\SFTP.cs" />

@@ -80,5 +80,8 @@ namespace RobinsonMallLinkingWBOX.Constants
                                                 FROM 
                                                     batchfile";
 
+        public const string INSERT_BATCHFILE = @"INSERT INTO batchfile (FileName, Count, TransTime, Status) 
+                                                         VALUES ({0},{1},{2},{3})";
+
     }
 }
