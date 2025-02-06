@@ -89,7 +89,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
                         TimeoutInMilliseconds = 60000
                     };
                     session.Open(SessionOptions1);
-                    string remoteFilePath = filepath;
+                    
                     TransferOptions transferOptions = new TransferOptions { TransferMode = TransferMode.Ascii };
                     string searchPattern = "*.*";
                     string[] filesToTransfer = Directory.GetFiles(GlobalVar.DIRECTORY, searchPattern);
@@ -97,10 +97,19 @@ namespace RobinsonMallLinkingWBOX.Helpers
                     foreach (string filePath in filesToTransfer)
                     {
                         string fileName = Path.GetFileName(filePath);
-                        string
+                        string successDirectoryPath = Path.Combine(GlobalVar.DIRECTORY, SentDirectoryName);
+                        string remoteFilePath = fileName;
+                        string sentfilepath = Path.Combine(successDirectoryPath, fileName);
+
+                        if (File.Exists(sentfilepath))
+                        {
+                            continue;
+                        }
 
                         TransferOperationResult transferResult = session.PutFiles(filepath, remoteFilePath, false, transferOptions);
                         transferResult.Check();
+
+
                     }
                 }
             }
