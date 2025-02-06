@@ -84,7 +84,7 @@ namespace RobinsonMallLinkingWBOX
         public string YESTERDAY_MMDDYYYY;
         public string YESTERDAY_YYYYMMDD;
         #endregion
-
+        SFTP sftp2 = new SFTP();
         public frmMallLinking()
         {
             InitializeComponent();
@@ -624,19 +624,21 @@ namespace RobinsonMallLinkingWBOX
                 // Generate Fixed-Width File
                 GenerateFixedWidthFile(EODSLS, folderPath, fileName);
 
+                #region Notif
                 // Simulate sending sales file to server
-                if (SendSalesFileToServer())
-                {
-                    MessageBox.Show("Sales file successfully sent to RLC server.", "EOD Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    MessageBox.Show("Sales file is not sent to RLC server. Please contact your POS vendor.", "EOD Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-
+                //if (SendSalesFileToServer())
+                //{
+                //    MessageBox.Show("Sales file successfully sent to RLC server.", "EOD Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                //}
+                //else
+                //{
+                //    MessageBox.Show("Sales file is not sent to RLC server. Please contact your POS vendor.", "EOD Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //}
+                #endregion
             }
             catch (Exception ex) {
                 MessageBox.Show($"Error: {ex.Message}\n{ex.StackTrace}");
+                ErrorLogger.LogError($"Error: {ex.Message}\n{ex.StackTrace}");
             }
         }
 
@@ -750,18 +752,24 @@ namespace RobinsonMallLinkingWBOX
         }
         #endregion
 
-        private bool SendSalesFileToServer()
+        private void SendSalesFileToServer(string filepath)
         {
             // Simulate server communication (replace with actual logic)
             try
             {
-                // Simulate successful sending
-                return true;
+                if(sftp2 != null)
+                {
+                    sftp2.SftpTrans(filepath, host, username, password);
+                }
+                else
+                {
+                    MessageBox.Show("sftp2 is null");
+                    return;
+                }
             }
-            catch
+            catch(Exception ex)
             {
-                // Simulate failure
-                return false;
+                ErrorLogger.LogError(ex.Message.ToString() + " || " + ex.StackTrace.ToString());
             }
         }
         #endregion
