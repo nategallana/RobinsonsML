@@ -102,7 +102,27 @@ namespace RobinsonMallLinkingWBOX
             InitializeEODHandler();
             InitializeAppCloseHandler();
         }
+        private void InitializeFolder()
+        {
+            try
+            {
+                string sentFolder = "Send File";
+                string unsentFolder = "Pending Filer";
 
+                string sent = Path.Combine(dir, sentFolder);
+                string unsent = Path.Combine(dir, unsentFolder);
+
+                if(!Directory.Exists(sent) || !Directory.Exists(unsent))
+                {
+                    Directory.CreateDirectory(sent);
+                    Directory.CreateDirectory(unsent);
+                }
+            }
+            catch(Exception ex)
+            {
+                ErrorLogger.LogError($"Error: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
         private void Form1_Load(object sender, EventArgs e)
         {
             try

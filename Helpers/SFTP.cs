@@ -1,6 +1,7 @@
 ﻿using RobinsonMallLinkingWBOX.Models;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -90,9 +91,17 @@ namespace RobinsonMallLinkingWBOX.Helpers
                     session.Open(SessionOptions1);
                     string remoteFilePath = filepath;
                     TransferOptions transferOptions = new TransferOptions { TransferMode = TransferMode.Ascii };
+                    string searchPattern = "*.*";
+                    string[] filesToTransfer = Directory.GetFiles(GlobalVar.DIRECTORY, searchPattern);
 
-                    TransferOperationResult transferResult = session.PutFiles(filepath, remoteFilePath, false, transferOptions);
-                    transferResult.Check();
+                    foreach (string filePath in filesToTransfer)
+                    {
+                        string fileName = Path.GetFileName(filePath);
+                        string
+
+                        TransferOperationResult transferResult = session.PutFiles(filepath, remoteFilePath, false, transferOptions);
+                        transferResult.Check();
+                    }
                 }
             }
         }
