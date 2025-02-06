@@ -59,7 +59,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
 
                             if (files.Length > 0)
                             {
-                                //SFTP.TrySendUnsentFiles(MallLinkConfig.NewRobServer, MallLinkConfig.NewRobUser, MallLinkConfig.NewRobPass);
+                                SFTP.TrySendUnsentFiles(GlobalVar.DIRECTORY, GlobalVar.HOST, GlobalVar.PASSWORD);
                                 //_notifyIcon.ShowBalloonTip(3000, "Connection Established", "Connected", ToolTipIcon.Info);
                                 if (GlobalVar.SuccessSending2 == true)
                                 {
