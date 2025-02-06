@@ -116,6 +116,7 @@
     <Compile Include="Helpers\ObjectFormatter.cs" />
     <Compile Include="Helpers\SettingsWriter.cs" />
     <Compile Include="Helpers\SFTP.cs" />
+    <Compile Include="Helpers\sftpConnectionChecker.cs" />
     <Compile Include="Helpers\Strings.cs" />
     <Compile Include="LocalStorage\Attributes\DbColumnAttribute.cs" />
     <Compile Include="LocalStorage\BaseStorage.cs" />
