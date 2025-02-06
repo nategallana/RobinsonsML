@@ -616,24 +616,6 @@ namespace RobinsonMallLinkingWBOX
                 string folderPath = dir;
                 string fileName = lastFourDigits + lastTransac + "." + EODTERMNO;
 
-                string batchDate = DateTime.Today.ToString("MMM-dd-yyyy");
-                string batchTime = DateTime.Now.ToString("hh-mm-tt");
-
-                int batchCount=1;
-                string status = "Open";
-
-                var batchfile = new BatchFile
-                {
-                    FileName = fileName,
-                    TransDate = batchDate,
-                    TransTime = batchTime,
-                    Count = batchCount,
-                    Status = status
-
-                };
-
-                batchfileDataStorage.Add(batchfile, false);
-
                 // Generate Fixed-Width File
                 GenerateFixedWidthFile(EODSLS, folderPath, fileName);
 
@@ -656,6 +638,11 @@ namespace RobinsonMallLinkingWBOX
         #region Generate EOD Textfile
         private void GenerateFixedWidthFile(EODSLSData eodData, string folderPath, string fileName)
         {
+            string batchDate = DateTime.Today.ToString("MMM-dd-yyyy");
+            string batchTime = DateTime.Now.ToString("hh-mm-tt");
+
+            int batchCount = 0;
+            string status = "Open";
 
             if (!Directory.Exists(folderPath))
             {
@@ -665,23 +652,50 @@ namespace RobinsonMallLinkingWBOX
             DataTable checkBatchFileName = batchfileDataStorage.CheckBatchFileName();
 
             bool fileExists = false;
+
+            // Check if the file already exists in the DataTable
             foreach (DataRow row in checkBatchFileName.Rows)
             {
-                string existingFileName = row["FileName"].ToString(); 
+                string existingFileName = row["FileName"].ToString();
+                int existingBatchCount = Convert.ToInt32(row["Count"]);
+
                 if (existingFileName == fileName)
                 {
                     fileExists = true;
-                    break;
+                    batchCount = existingBatchCount + 1;
+
+                    break; // Exit the loop once the match is found
                 }
             }
 
+            // Create or update the batch file entry
             if (fileExists)
             {
-                Console.WriteLine("The file name already exists in the table.");
+                var batchfile = new BatchFile
+                {
+                    FileName = fileName,
+                    TransDate = batchDate,
+                    TransTime = batchTime,
+                    Count = batchCount,
+                    Status = status
+                };
+
+                batchfileDataStorage.Add(batchfile, false);
             }
             else
             {
-                Console.WriteLine("The file name does not exist in the table.");
+                batchCount = 1;
+
+                var batchfile = new BatchFile
+                {
+                    FileName = fileName,
+                    TransDate = batchDate,
+                    TransTime = batchTime,
+                    Count = batchCount,
+                    Status = status
+                };
+
+                batchfileDataStorage.Add(batchfile, false);
             }
 
             // Combine folder path and file name to get the full file path
