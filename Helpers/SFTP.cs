@@ -17,6 +17,8 @@ namespace RobinsonMallLinkingWBOX.Helpers
         public SettingsWriter _settings = null;
         public Configuration _systemConfig = null;
         public List<Configuration> _system = new List<Configuration>();
+        Logdata logs = new Logdata();
+        //SftpConnectionChecker checker = new SftpConnectionChecker();
         private string ServerName, Username, Password, directory, TenantName, TempDB;
         public void InitializeConfiguration()
         {
@@ -109,8 +111,16 @@ namespace RobinsonMallLinkingWBOX.Helpers
                         TransferOperationResult transferResult = session.PutFiles(filepath, remoteFilePath, false, transferOptions);
                         transferResult.Check();
 
+                        logs.log(fileName, GlobalVar.batchcount, "Sent");
 
+                        string sent = Path.Combine(successDirectoryPath, fileName);
+                        File.Copy(filePath, successDirectoryPath, true);
+                        File.Delete(filePath);
                     }
+                    GlobalVar.SuccessSending = true;
+                    GlobalVar.ErrorSending = false;
+                    GlobalVar.SuccessSending2 = false;
+                    sftpConnectionChecker.StopChecking();
                 }
             }
         }

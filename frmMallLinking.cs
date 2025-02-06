@@ -717,7 +717,7 @@ namespace RobinsonMallLinkingWBOX
                     Count = batchCount,
                     Status = status
                 };
-
+                GlobalVar.batchcount = batchCount;
                 batchfileDataStorage.Add(batchfile, false);
             }
             else
@@ -732,7 +732,7 @@ namespace RobinsonMallLinkingWBOX
                     Count = batchCount,
                     Status = status
                 };
-
+                GlobalVar.batchcount = batchCount;
                 batchfileDataStorage.Add(batchfile, false);
             }
 
