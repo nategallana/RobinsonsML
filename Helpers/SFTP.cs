@@ -67,7 +67,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
             if (CheckSftpConnection())
             {
                 connectionTimer?.Dispose();
-                //TrySendUnsentFiles(timerState.SftpHost, timerState.SftpUsername, timerState.SftpPassword);
+                TrySendUnsentFiles(timerState.SftpHost, timerState.SftpUsername, timerState.SftpPassword);
             }
             else
             {
@@ -77,52 +77,176 @@ namespace RobinsonMallLinkingWBOX.Helpers
 
         public void SftpTrans(string filepath,string sftpHost, string sftpUsername, string sftpPassword)
         {
-            if(CheckSftpConnection())
+            try
             {
-                using (Session session = new Session())
+                if (CheckSftpConnection())
                 {
-                    SessionOptions1 = new SessionOptions
+                    using (Session session = new Session())
                     {
-                        Protocol = Protocol.Sftp,
-                        HostName = sftpHost,
-                        UserName = sftpUsername,
-                        Password = sftpPassword,
-                        PortNumber = 22,
-                        TimeoutInMilliseconds = 60000
-                    };
-                    session.Open(SessionOptions1);
-                    
-                    TransferOptions transferOptions = new TransferOptions { TransferMode = TransferMode.Ascii };
-                    string searchPattern = "*.*";
-                    string[] filesToTransfer = Directory.GetFiles(GlobalVar.DIRECTORY, searchPattern);
-
-                    foreach (string filePath in filesToTransfer)
-                    {
-                        string fileName = Path.GetFileName(filePath);
-                        string successDirectoryPath = Path.Combine(GlobalVar.DIRECTORY, SentDirectoryName);
-                        string remoteFilePath = fileName;
-                        string sentfilepath = Path.Combine(successDirectoryPath, fileName);
-
-                        if (File.Exists(sentfilepath))
+                        SessionOptions1 = new SessionOptions
                         {
-                            continue;
+                            Protocol = Protocol.Sftp,
+                            HostName = sftpHost,
+                            UserName = sftpUsername,
+                            Password = sftpPassword,
+                            PortNumber = 22,
+                            TimeoutInMilliseconds = 60000
+                        };
+                        session.Open(SessionOptions1);
+
+                        TransferOptions transferOptions = new TransferOptions { TransferMode = TransferMode.Ascii };
+                        string searchPattern = "*.*";
+                        string[] filesToTransfer = Directory.GetFiles(GlobalVar.DIRECTORY, searchPattern);
+
+                        foreach (string filePath in filesToTransfer)
+                        {
+                            string fileName = Path.GetFileName(filePath);
+                            string successDirectoryPath = Path.Combine(GlobalVar.DIRECTORY, SentDirectoryName);
+                            string remoteFilePath = fileName;
+                            string sentfilepath = Path.Combine(successDirectoryPath, fileName);
+
+                            if (File.Exists(sentfilepath))
+                            {
+                                continue;
+                            }
+
+                            TransferOperationResult transferResult = session.PutFiles(filepath, remoteFilePath, false, transferOptions);
+                            transferResult.Check();
+
+                            logs.log(fileName, GlobalVar.batchcount, "Sent");
+
+                            string sent = Path.Combine(successDirectoryPath, fileName);
+                            File.Copy(filePath, successDirectoryPath, true);
+                            File.Delete(filePath);
                         }
-
-                        TransferOperationResult transferResult = session.PutFiles(filepath, remoteFilePath, false, transferOptions);
-                        transferResult.Check();
-
-                        logs.log(fileName, GlobalVar.batchcount, "Sent");
-
-                        string sent = Path.Combine(successDirectoryPath, fileName);
-                        File.Copy(filePath, successDirectoryPath, true);
-                        File.Delete(filePath);
+                        GlobalVar.SuccessSending = true;
+                        GlobalVar.ErrorSending = false;
+                        GlobalVar.SuccessSending2 = false;
+                        sftpConnectionChecker.StopChecking();
                     }
-                    GlobalVar.SuccessSending = true;
-                    GlobalVar.ErrorSending = false;
-                    GlobalVar.SuccessSending2 = false;
-                    sftpConnectionChecker.StopChecking();
+                }
+                else
+                {
+                    BackupUnsentFiles(GlobalVar.DIRECTORY, logs);
+                    StartTimerIfNeeded("start", sftpHost, sftpUsername, sftpPassword);
                 }
             }
+            catch(Exception ex)
+            {
+                StartTimerIfNeeded("start", sftpHost, sftpUsername, sftpPassword);
+                //SftpConnectionChecker.StartChecking();
+                HandleException(ex);
+            }
+        }
+        public static void TrySendUnsentFiles(string sftpHost, string sftpUsername, string sftpPassword)
+        {
+            Logdata logger = new Logdata();
+            //MessageBox.Show("Sending unsent files");
+            if (CheckSftpConnection())
+            {
+
+                string backupDirectoryPath = Path.Combine(GlobalVar.DIRECTORY, UnsentDirectoryName);
+                if (Directory.Exists(backupDirectoryPath))
+                {
+                    // Adjust the search pattern as needed
+                    string searchPattern = "*.*";
+                    // string[] unsentFiles = Directory.GetFiles(MallLinkConfig.filepath, searchPattern);
+                    string[] unsentFiles = Directory.GetFiles(backupDirectoryPath, searchPattern);
+                    if (unsentFiles.Length > 0)
+                    {
+                        try
+                        {
+                            using (Session session = new Session())
+                            {
+                                SessionOptions1 = new SessionOptions
+                                {
+                                    Protocol = Protocol.Sftp,
+                                    HostName = sftpHost,
+                                    UserName = sftpUsername,         
+                                    Password = sftpPassword,
+                                    PortNumber = 22,
+                                    SshHostKeyFingerprint = GlobalVar.SSH,
+                                    TimeoutInMilliseconds = 60000// Ensure this is the correct fingerprint
+                                };
+
+                                session.Open(SessionOptions1);
+
+                                TransferOptions transferOptions = new TransferOptions { TransferMode = TransferMode.Ascii };
+
+                                foreach (string unsentFile in unsentFiles)
+                                {
+                                    string fileName = Path.GetFileName(unsentFile);
+                                    string remoteFilePath = fileName; // Only the filename, no directory structure
+
+                                    //if(session.FileExists(remoteFilePath))
+                                    //{
+                                    //    continue;
+                                    //}
+
+                                    TransferOperationResult transferResult = session.PutFiles(unsentFile, remoteFilePath, false, transferOptions);
+                                    transferResult.Check();
+
+                                    logger.log(fileName,GlobalVar.batchcount, "Sent");
+
+                                    string successDirectoryPath = Path.Combine(GlobalVar.DIRECTORY, SentDirectoryName);
+
+                                    string sentFilePath = Path.Combine(successDirectoryPath, fileName);
+                                    File.Copy(unsentFile, sentFilePath, true); // Move the file to the sent directory
+                                    File.Delete(unsentFile); // Delete the file from the backup directory after successful transfer
+
+                                }
+
+                                // ShowMessage("Trying to send unsent files... Successfully");
+                                GlobalVar.SuccessSending2 = true;
+                                GlobalVar.ErrorSending = false;
+                                GlobalVar.SuccessSending = false;
+                            }
+
+                            // SftpConnectionChecker.StopChecking();
+                        }
+                        catch (Exception ex)
+                        {
+                            StartTimerIfNeeded("start", GlobalVar.HOST, GlobalVar.USERNAME, GlobalVar.PASSWORD);
+                            HandleException(ex);
+                            sftpConnectionChecker.StartChecking();
+                            //ShowMessageError("Sales file is not sent to RLC server. Please contact your POS vendor");
+                        }
+                    }
+
+
+                }
+            }
+        }
+        private static void BackupUnsentFiles(string directoryPath, Logdata logger)
+        {
+            string backupDirectoryPath = Path.Combine(GlobalVar.DIRECTORY, UnsentDirectoryName);
+           // CreateDirectoryIfNotExists(backupDirectoryPath);
+
+            // Adjust the search pattern as needed
+            string searchPattern = "*.*";
+            string[] filesToBackup = Directory.GetFiles(GlobalVar.DIRECTORY, searchPattern);
+
+            foreach (string filePath in filesToBackup)
+            {
+                string fileName = Path.GetFileName(filePath);
+                string successDirectoryPath = Path.Combine(GlobalVar.DIRECTORY, SentDirectoryName);
+                string backupFilePath = Path.Combine(backupDirectoryPath, fileName);
+                string remoteFilePath = fileName;
+                string sentfilepath = Path.Combine(successDirectoryPath, fileName);
+
+                if (File.Exists(sentfilepath))
+                {
+                    continue;
+                }
+
+                File.Copy(filePath, backupFilePath, true); // Move the file to the backup directory
+                                                           //File.Delete(filePath);
+                logger.log(fileName,GlobalVar.batchcount, "Unsent");
+            }
+
+            GlobalVar.ErrorSending = true;
+            GlobalVar.SuccessSending = false;
+            GlobalVar.SuccessSending2 = false;
         }
         public static bool CheckSftpConnection()
         {
