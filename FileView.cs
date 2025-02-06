@@ -17,16 +17,21 @@ namespace RobinsonMallLinkingWBOX
         {
             InitializeComponent();
         }
-        private string connectionString = "Data Source=BatchFile.db;Version=3;";
+        private string connectionString = "Data Source=RobinsonTemp.db;Version=3;";
         private void FileView_Load(object sender, EventArgs e)
         {
             
+            
+        }
+
+        private void btn_load_Click(object sender, EventArgs e)
+        {
             using (SQLiteConnection conn = new SQLiteConnection(connectionString))
             {
                 try
                 {
                     conn.Open();
-                    string query = "SELECT * FROM ;";
+                    string query = "SELECT * FROM batchfile;";
                     using (SQLiteDataAdapter adapter = new SQLiteDataAdapter(query, conn))
                     {
                         DataTable dt = new DataTable();
@@ -39,6 +44,11 @@ namespace RobinsonMallLinkingWBOX
                     MessageBox.Show($"Error: {ex.Message}");
                 }
             }
+        }
+
+        private void X_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
     }
 }
