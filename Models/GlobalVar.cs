@@ -42,5 +42,8 @@ namespace RobinsonMallLinkingWBOX.Models
         public static string TERMINALNO { get => terno; set => terno = value.ToString(); }
         public static string TEMPMDB { get => tempmdb; set => tempmdb = value.ToString(); }
         public static string SSH { get => ssh; set => ssh = value.ToString(); }
+        public static bool SuccessSending { get; set; }
+        public static bool SuccessSending2 { get; set; }
+        public static bool ErrorSending { get; set; }
     }
 }
