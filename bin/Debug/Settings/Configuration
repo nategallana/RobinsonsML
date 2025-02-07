@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <XMLPath>D:\Kim\Robinson\Restrnt\XMLOut</XMLPath>
+  <XMLPath>C:\Restrnt\XMLOut</XMLPath>
   <Host>rlccloud.robinsonsland.com</Host>
   <Username>accredit</Username>
   <Password>RLC@Partners</Password>
-  <Directory>D:\Kim\Robinson\CSV\Robinson</Directory>
+  <Directory>C:\Restrnt\New folder</Directory>
   <TenantName>123456789</TenantName>
   <TerminalNo>01</TerminalNo>
   <TempMDB>D:\Kim\Robinson\Restrnt\Z-Reading\TempDB.mdb</TempMDB>
-  <SSHKey />
+  <SSHKey>0x4b8dc857d9d9b532c5d0dd03c5542487fb64f8c24a8b4b193c5d6c2c8130efa4</SSHKey>
 </Configuration>
