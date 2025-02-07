@@ -256,11 +256,11 @@ namespace RobinsonMallLinkingWBOX.Helpers
                 SessionOptions1 = new SessionOptions
                 {
                     Protocol = Protocol.Sftp,
-                    HostName = Settings.HOST,
-                    UserName = Settings.USERNAME,
-                    Password = Settings.PASSWORD,
+                    HostName = GlobalVar.HOST,
+                    UserName = GlobalVar.USERNAME,
+                    Password = GlobalVar.PASSWORD,
                     PortNumber = 22,
-                    SshHostKeyFingerprint = Settings.SSH, // Ensure this is the correct fingerprint
+                    SshHostKeyFingerprint = GlobalVar.SSH, // Ensure this is the correct fingerprint
                     TimeoutInMilliseconds = 120000,
 
                 };

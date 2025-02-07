@@ -24,7 +24,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
                 {
                     conn.Open();
 
-                    string query = "INSERT INTO BatchFile (FileName, Count, Date, Hour, Status) VALUES (@FileName, @Count, @Date, @Hour, @Status)";
+                    string query = "INSERT INTO BatchFile (FileName, Count, TransDate, TransTime, Status) VALUES (@FileName, @Count, @Date, @Hour, @Status)";
 
                     using (SQLiteCommand cmd = new SQLiteCommand(query, conn))
                     {

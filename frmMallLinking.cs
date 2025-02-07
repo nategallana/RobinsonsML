@@ -110,7 +110,7 @@ namespace RobinsonMallLinkingWBOX
             try
             {
                 string sentFolder = "Send File";
-                string unsentFolder = "Pending Filer";
+                string unsentFolder = "Pending File";
 
                 string sent = Path.Combine(dir, sentFolder);
                 string unsent = Path.Combine(dir, unsentFolder);
