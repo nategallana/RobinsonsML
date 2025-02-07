@@ -76,7 +76,8 @@ namespace RobinsonMallLinkingWBOX.Constants
                                                         DATE({1}) = '{2}'";
 
         public const string SELECT_BATCHNAME = @"SELECT
-                                                    batchfile.FileName 
+                                                    batchfile.FileName,
+                                                    batchfile.Count
                                                 FROM 
                                                     batchfile";
 

@@ -14,10 +14,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
-using System.Windows.Forms;.
+using System.Windows.Forms;
 
 using System.Xml.Linq;
 using Tarsier.Extensions;
+using System.Runtime.InteropServices.ComTypes;
 
 namespace RobinsonMallLinkingWBOX
 {
@@ -301,7 +302,14 @@ namespace RobinsonMallLinkingWBOX
         private void eODToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Scenarios();
-            checkEODpreviousDates();
+            //checkEODpreviousDates();
+            DateTime sDate = DateTime.Now;
+            DateTime eDate = DateTime.Now;
+
+            string startDate = sDate.ToString("MMddyyyy");
+            string endDate = eDate.ToString("MMddyyyy");
+
+            convertFormatDate(startDate, endDate);
         }
         #endregion
 
@@ -681,7 +689,7 @@ namespace RobinsonMallLinkingWBOX
             string batchTime = DateTime.Now.ToString("hh-mm-tt");
 
             int batchCount = 0;
-            string status = "sent";
+            string status = "unsent";
 
             if (!Directory.Exists(folderPath))
             {
@@ -719,7 +727,7 @@ namespace RobinsonMallLinkingWBOX
                     Status = status
                 };
                 GlobalVar.batchcount = batchCount;
-                batchfileDataStorage.Add(batchfile, false);
+                //batchfileDataStorage.Add(batchfile, false);
             }
             else
             {
@@ -734,11 +742,11 @@ namespace RobinsonMallLinkingWBOX
                     Status = status
                 };
                 GlobalVar.batchcount = batchCount;
-                batchfileDataStorage.Add(batchfile, false);
+                //batchfileDataStorage.Add(batchfile, false);
             }
 
             // Combine folder path and file name to get the full file path
-            string fullFilePath = Path.Combine(folderPath, fileName);
+            string fullFilePath = Path.Combine(folderPath, fileName + batchCount.ToString());
 
             using (StreamWriter writer = new StreamWriter(fullFilePath))
             {
@@ -763,7 +771,7 @@ namespace RobinsonMallLinkingWBOX
                 writer.WriteLine($"15{eodData.PrvGrndTot.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"16{eodData.CurrEODcntr.ToString().PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"17{eodData.CurrGrndTot.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
-                writer.WriteLine($"18{DateTime.Parse(eodData.TransDate).ToString("MM/dd/yy").PadLeft(totalWidth - 2, '0')}");
+                //writer.WriteLine($"18{DateTime.Parse(eodData.TransDate).ToString("MM/dd/yy").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"19{eodData.Novelty.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"20{eodData.Misc.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"21{eodData.LocTax.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
@@ -812,18 +820,33 @@ namespace RobinsonMallLinkingWBOX
         #endregion
         private void CheckFileSendingStatus()
         {
-            if(GlobalVar.SuccessSending)
+            //if (GlobalVar.SuccessSending)
+            //{
+            //    _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Sale file Successfully sent to RLC server", ToolTipIcon.Info);
+            //    this.Close();
+            //}
+            //else if (GlobalVar.SuccessSending2 && !GlobalVar.SuccessSending)
+            //{
+            //    _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Trying to send unsent files...Successfully", ToolTipIcon.Info);
+            //}
+            //else
+            //{
+            //    _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Sales file is not sent to RLC server. Please contact your POS vendor", ToolTipIcon.Error);
+            //    //SftpConnectionChecker.StartChecking();
+            //}
+
+            if (GlobalVar.SuccessSending)
             {
-                _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Sale file Successfully sent to RLC server", ToolTipIcon.Info);
+                MessageBox.Show("Sale file successfully sent to RLC server.", "Mall Linking", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
             }
             else if (GlobalVar.SuccessSending2 && !GlobalVar.SuccessSending)
             {
-                _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Trying to send unsent files...Successfully", ToolTipIcon.Info);
+                MessageBox.Show("Trying to send unsent files... Successfully.", "Mall Linking", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             else
             {
-                _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Sales file is not sent to RLC server. Please contact your POS vendor", ToolTipIcon.Error);
+                MessageBox.Show("Sales file is not sent to RLC server. Please contact your POS vendor.", "Mall Linking", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 //SftpConnectionChecker.StartChecking();
             }
         }
