@@ -29,7 +29,7 @@ namespace RobinsonMallLinkingWBOX.Models
                 tname = _systemConfig.TenantName.Trim().ToString();
                 terno = _systemConfig.TerminalNo.Trim().ToString();
                 tempmdb = _systemConfig.TempMDB.Trim().ToString();
-                //ssh = _systemConfig.SSHKey.Trim().ToString();
+                ssh = _systemConfig.SSHKey.Trim().ToString();
             }
         }
 

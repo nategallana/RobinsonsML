@@ -31,7 +31,9 @@ namespace RobinsonMallLinkingWBOX
         public Configuration configuration = null;
         public Settings settings = null;
         SFTP sftp2 = new SFTP();
+#pragma warning disable CS0649 // Field 'frmDateRange._notifyIcon' is never assigned to, and will always have its default value null
         private static NotifyIcon _notifyIcon;
+#pragma warning restore CS0649 // Field 'frmDateRange._notifyIcon' is never assigned to, and will always have its default value null
         #region EODVariables
         public string EODTENTID;
         public string EODTERMNO;

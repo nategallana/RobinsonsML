@@ -8,7 +8,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+#pragma warning disable CS0105 // The using directive for 'RobinsonMallLinkingWBOX.Models' appeared previously in this namespace
 using RobinsonMallLinkingWBOX.Models;
+#pragma warning restore CS0105 // The using directive for 'RobinsonMallLinkingWBOX.Models' appeared previously in this namespace
 
 namespace RobinsonMallLinkingWBOX.Helpers
 {

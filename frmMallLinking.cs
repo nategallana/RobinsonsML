@@ -87,7 +87,9 @@ namespace RobinsonMallLinkingWBOX
         public string YESTERDAY_YYYYMMDD;
         #endregion
         SFTP sftp2 = new SFTP();
+#pragma warning disable CS0169 // The field 'frmMallLinking._notifyIcon' is never used
         private static NotifyIcon _notifyIcon;
+#pragma warning restore CS0169 // The field 'frmMallLinking._notifyIcon' is never used
         public frmMallLinking()
         {
             InitializeComponent();
