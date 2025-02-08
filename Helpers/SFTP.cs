@@ -79,6 +79,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
 
         public void SftpTrans(string filepath,string sftpHost, string sftpUsername, string sftpPassword)
         {
+            Logdata logger = new Logdata();
             try
             {
                 if (CheckSftpConnection())
@@ -92,6 +93,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
                             UserName = sftpUsername,
                             Password = sftpPassword,
                             PortNumber = 22,
+                            SshHostKeyFingerprint = GlobalVar.SSH,
                             TimeoutInMilliseconds = 60000
                         };
                         session.Open(SessionOptions1);
@@ -115,10 +117,10 @@ namespace RobinsonMallLinkingWBOX.Helpers
                             TransferOperationResult transferResult = session.PutFiles(filepath, remoteFilePath, false, transferOptions);
                             transferResult.Check();
 
-                            logs.log(fileName, GlobalVar.batchcount, "Sent");
+                            logger.log(fileName, GlobalVar.batchcount, "Sent");
 
                             string sent = Path.Combine(successDirectoryPath, fileName);
-                            File.Copy(filePath, successDirectoryPath, true);
+                            File.Copy(filePath, sent, true);
                             File.Delete(filePath);
                         }
                         GlobalVar.SuccessSending = true;
@@ -136,6 +138,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
             catch(Exception ex)
             {
                 StartTimerIfNeeded("start", sftpHost, sftpUsername, sftpPassword);
+                ErrorLogger.LogError(ex.Message + " || " + ex.StackTrace);
                 //SftpConnectionChecker.StartChecking();
                 HandleException(ex);
             }
