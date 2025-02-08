@@ -47,7 +47,7 @@ namespace RobinsonMallLinkingWBOX
                 txtTenantName.Text = _systemConfig.TenantName.Trim().ToString();
                 txtTerminal.Text = _systemConfig.TerminalNo.Trim().ToString();
                 txtTempDB.Text = _systemConfig.TempMDB.Trim().ToString();
-                //txtSSHKey.Text = _systemConfig.SSHKey.Trim().ToString();
+                txtSSHKey.Text = _systemConfig.SSHKey.Trim().ToString();
             }
         }
 

@@ -37,7 +37,9 @@ namespace RobinsonMallLinkingWBOX.Helpers
         }
         private const string UnsentDirectoryName = "Pending File";
         private const string SentDirectoryName = "Send File";
+#pragma warning disable CS0169 // The field 'SFTP._notifyIcon' is never used
         private static NotifyIcon _notifyIcon;
+#pragma warning restore CS0169 // The field 'SFTP._notifyIcon' is never used
         private static System.Threading.Timer connectionTimer;
 
         public static SessionOptions SessionOptions1 { get; set; }
@@ -331,7 +333,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
             else
             {
                 // MessageBox.Show($"{ex.Message} || {ex.StackTrace}");
-                ErrorLogger.LogError($"{ex.Message} || {ex.StackTrace}");
+                ErrorLogger.LogError ($"{ex.Message} || {ex.StackTrace}");
 
             }
             StartTimerIfNeeded("start", Settings.HOST, Settings.USERNAME, Settings.PASSWORD);

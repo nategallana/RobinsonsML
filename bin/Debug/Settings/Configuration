@@ -8,5 +8,5 @@
   <TenantName>123456789</TenantName>
   <TerminalNo>01</TerminalNo>
   <TempMDB>D:\Kim\Robinson\Restrnt\Z-Reading\TempDB.mdb</TempMDB>
-  <SSHKey>0x4b8dc857d9d9b532c5d0dd03c5542487fb64f8c24a8b4b193c5d6c2c8130efa4</SSHKey>
+  <SSHKey>ssh-ed25519 255 wZqawUKvpGk5k26c8VouYfK3uWXMs+0BZLTFtaga54Q</SSHKey>
 </Configuration>
