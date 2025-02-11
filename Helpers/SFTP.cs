@@ -121,7 +121,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
 
                             string sent = Path.Combine(successDirectoryPath, fileName);
                             File.Copy(filePath, sent, true);
-                            File.Delete(filePath);
+                            //File.Delete(filePath);
                         }
                         GlobalVar.SuccessSending = true;
                         GlobalVar.ErrorSending = false;
@@ -197,7 +197,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
 
                                     string sentFilePath = Path.Combine(successDirectoryPath, fileName);
                                     File.Copy(unsentFile, sentFilePath, true); // Move the file to the sent directory
-                                    File.Delete(unsentFile); // Delete the file from the backup directory after successful transfer
+                                    //File.Delete(unsentFile); // Delete the file from the backup directory after successful transfer
 
                                 }
 
