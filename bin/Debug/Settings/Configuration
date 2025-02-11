@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-16"?>
 <Configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <XMLPath>C:\Restrnt\XMLOut</XMLPath>
+  <XMLPath>D:\Kim\Robinson\Restrnt\XMLOut</XMLPath>
   <Host>rlccloud.robinsonsland.com</Host>
   <Username>accredit</Username>
   <Password>RLC@Partners</Password>
-  <Directory>C:\Restrnt\New folder</Directory>
+  <Directory>D:\Kim\Robinson\Restrnt\New folder</Directory>
   <TenantName>123456789</TenantName>
   <TerminalNo>01</TerminalNo>
   <TempMDB>D:\Kim\Robinson\Restrnt\Z-Reading\TempDB.mdb</TempMDB>
