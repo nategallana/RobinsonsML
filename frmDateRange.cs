@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -18,6 +19,24 @@ namespace RobinsonMallLinkingWBOX
 {
     public partial class frmDateRange : Form
     {
+
+        public frmDateRange()
+        {
+            InitializeComponent();
+            GlobalVar.InitializeConfiguration();
+
+            xml = GlobalVar.XMLPath;
+            host = GlobalVar.HOST;
+            username = GlobalVar.USERNAME;
+            password = GlobalVar.PASSWORD;
+            dir = GlobalVar.DIRECTORY;
+            tenantname = GlobalVar.TENANTNAME;
+            terminal = GlobalVar.TERMINALNO;
+
+            InitializeFolder();
+        }
+
+
         public string _databaseFileName = Path.Combine(Application.StartupPath, TempDBName.DATABASE);
         public TransactionsDataStorage transactionDataStorage = null;
         public BatchFileDataStorage batchfileDataStorage = null;
@@ -106,9 +125,26 @@ namespace RobinsonMallLinkingWBOX
             EODTOTAMNTREPRNT = 0.00M;
             EODNOREPRNT = 0;
         }
-        public frmDateRange()
+        private void InitializeFolder()
         {
-            InitializeComponent();
+            try
+            {
+                string sentFolder = "Send File";
+                string unsentFolder = "Pending File";
+
+                string sent = Path.Combine(dir, sentFolder);
+                string unsent = Path.Combine(dir, unsentFolder);
+
+                if (!Directory.Exists(sent) || !Directory.Exists(unsent))
+                {
+                    Directory.CreateDirectory(sent);
+                    Directory.CreateDirectory(unsent);
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorLogger.LogError($"Error: {ex.Message}\n{ex.StackTrace}");
+            }
         }
         private void btnClose_Click(object sender, EventArgs e)
         {
@@ -116,6 +152,8 @@ namespace RobinsonMallLinkingWBOX
         }
         private void btnGenerate_Click(object sender, EventArgs e)
         {
+            Scenarios();
+
             DateTime start = dtpFrom.Value;
             DateTime end = dtpTo.Value;
 
@@ -125,6 +163,68 @@ namespace RobinsonMallLinkingWBOX
             }
         }
 
+        private void frmDateRange_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                Program.DatabaseFile = _databaseFileName;
+                batchfileDataStorage = new BatchFileDataStorage();
+                transactionDataStorage = new TransactionsDataStorage();
+                discountDataStorage = new DiscountDataStorage();
+                itemDataStorage = new ItemDataStorage();
+                paymentDataStorage = new PaymentDataStorage();
+                taxDataStorage = new TaxDataStorage();
+                voidDataStorage = new VoidDataStorage();
+                //eodDataStorage = new EODDataStorage();
+                eodSLSDataStorage = new EODSLSDataStorage();
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred during form load:\n{ex.Message}", "Check Settings", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+
+
+
+        public void Scenarios()
+        {
+            DateTime now = DateTime.Now;
+
+            if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
+            {
+                MessageBox.Show("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                // Close the different application (e.g., "OtherApp")
+                string targetProcessName = "wDesktop"; // Replace with the actual process name without ".exe"
+
+                var processes = Process.GetProcessesByName(targetProcessName);
+                if (processes.Any())
+                {
+                    foreach (var process in processes)
+                    {
+                        try
+                        {
+                            process.Kill();
+                            process.WaitForExit();
+                            MessageBox.Show($"Not allowed to transact at this time.", "Application Closed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
+                                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                else
+                {
+                    MessageBox.Show($"No running instance of '{targetProcessName}' was found.",
+                                    "Application Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                return;
+            }
+        }
         public void PerformEOD(string mmddyyyy, string yyyymmdd, string yesterday)
         {
             InitializeEODValues();
@@ -362,7 +462,7 @@ namespace RobinsonMallLinkingWBOX
                 writer.WriteLine($"15{eodData.PrvGrndTot.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"16{eodData.CurrEODcntr.ToString().PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"17{eodData.CurrGrndTot.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
-                writer.WriteLine($"18{DateTime.Parse(eodData.TransDate).ToString("MM/dd/yy").PadLeft(totalWidth - 2, '0')}");
+                //writer.WriteLine($"18{DateTime.Parse(eodData.TransDate).ToString("MM/dd/yy").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"19{eodData.Novelty.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"20{eodData.Misc.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"21{eodData.LocTax.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
