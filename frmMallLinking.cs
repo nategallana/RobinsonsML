@@ -296,10 +296,6 @@ namespace RobinsonMallLinkingWBOX
             _frm.Show();
         }
 
-        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
-        {
-
-        }
 
         private void eODToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -489,6 +485,12 @@ namespace RobinsonMallLinkingWBOX
                 // Log the exception or show it for debugging
                 MessageBox.Show($"Error: {ex.Message}");
             }
+        }
+
+        private void dateRangeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Form _frm = new frmDateRange();
+            _frm.Show();
         }
         #endregion
 

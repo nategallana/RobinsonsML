@@ -143,6 +143,7 @@
             this.Name = "frmDateRange";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Date Range";
+            this.Load += new System.EventHandler(this.frmDateRange_Load);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             this.panel2.ResumeLayout(false);
