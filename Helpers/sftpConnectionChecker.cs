@@ -31,18 +31,18 @@ namespace RobinsonMallLinkingWBOX.Helpers
         public static void StopChecking()
         {
             _cancellationTokenSource.Cancel();
-            _notifyIcon.Visible = false; // Hide the tray icon
-            _notifyIcon.Dispose(); // Dispose the tray icon
+            //_notifyIcon.Visible = false; // Hide the tray icon
+            //_notifyIcon.Dispose(); // Dispose the tray icon
         }
         private static async Task CheckConnectionLoop(CancellationToken cancellationToken)
         {
-            _notifyIcon = new NotifyIcon
-            {
-                Icon = SystemIcons.Information,
-                Visible = true,
-                Text = "SFTP Connection Checker",
-                BalloonTipTitle = "SFTP Connection Status"
-            };
+            //_notifyIcon = new NotifyIcon
+            //{
+            //    Icon = SystemIcons.Information,
+            //    Visible = true,
+            //    Text = "SFTP Connection Checker",
+            //    BalloonTipTitle = "SFTP Connection Status"
+            //};
 
             while (!cancellationToken.IsCancellationRequested)
             {

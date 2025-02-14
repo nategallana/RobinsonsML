@@ -18,7 +18,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
            try
             {
                 string date = DateTime.Now.ToString("MM-dd-yyyy");
-                string hour = DateTime.Now.ToString("HH:MM");
+                string hour = DateTime.Now.ToString("HH:mm");
 
                 using (SQLiteConnection conn = new SQLiteConnection(connectionString))
                 {

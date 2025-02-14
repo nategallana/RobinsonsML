@@ -146,6 +146,10 @@ namespace RobinsonMallLinkingWBOX
                 notifyIcon1.BalloonTipText = " ";
                 notifyIcon1.ShowBalloonTip(2000);
 
+                sftpConnectionChecker.StartChecking();
+
+
+
                 BackupXML(xml);
             }
             catch (Exception ex)
@@ -690,7 +694,7 @@ namespace RobinsonMallLinkingWBOX
         {
             //SFTP sftpClient = new SFTP();
             string batchDate = DateTime.Today.ToString("MMM-dd-yyyy");
-            string batchTime = DateTime.Now.ToString("hh-mm-tt");
+            string batchTime = DateTime.Now.ToString("hh:mm:ss tt");
 
             int batchCount = 0;
             string status = "unsent";
@@ -700,24 +704,43 @@ namespace RobinsonMallLinkingWBOX
                 Directory.CreateDirectory(folderPath);
             }
 
-            DataTable checkBatchFileName = batchfileDataStorage.CheckBatchFileName();
+
+
+            DataTable checkBatchFileName = batchfileDataStorage.CheckBatchFileName(); // Ensure this gets fresh data
 
             bool fileExists = false;
+            int latestBatchCount = 0;
+
+            // Get the latest batch count for the matching file
+            var latestRow = checkBatchFileName.AsEnumerable()
+                .Where(row => row["FileName"].ToString().Length >= 11 &&
+                              row["FileName"].ToString().Substring(0, 11) == fileName) // Ensure correct file match
+                .OrderByDescending(row => Convert.ToInt32(row["Count"])) // Get the highest count
+                .FirstOrDefault();
+
+            if (latestRow != null)
+            {
+                latestBatchCount = Convert.ToInt32(latestRow["Count"]);
+            }
 
             // Check if the file already exists in the DataTable
             foreach (DataRow row in checkBatchFileName.Rows)
             {
-                string existingFileName = row["FileName"].ToString();
-                int existingBatchCount = Convert.ToInt32(row["Count"]);
+                string existingFileName = row["FileName"].ToString(); // Example: '67890214.011'
+                string extractedPart = existingFileName.Length >= 11 ? existingFileName.Substring(0, 11) : existingFileName;
+                //int existingBatchCount = Convert.ToInt32(row["Count"]);
 
-                if (existingFileName == fileName)
+                if (extractedPart == fileName)
                 {
                     fileExists = true;
-                    batchCount = existingBatchCount + 1;
+                    batchCount = latestBatchCount + 1; // Use the latest count
 
                     break; // Exit the loop once the match is found
                 }
             }
+
+
+
 
             // Create or update the batch file entry
             if (fileExists)
