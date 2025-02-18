@@ -126,7 +126,7 @@ namespace RobinsonMallLinkingWBOX
             EODNOREPRNT = 0;
         }
         private void InitializeFolder()
-        {
+       {
             try
             {
                 string sentFolder = "Send File";
@@ -157,9 +157,9 @@ namespace RobinsonMallLinkingWBOX
             DateTime start = dtpFrom.Value;
             DateTime end = dtpTo.Value;
 
-            for(var day = start; start <= end; day = day.AddDays(1))
+            for(var day = start; day <= end; day = day.AddDays(1))
             {
-                PerformEOD(day.ToString("mmddyyyy"), day.ToString("yyyymmdd"), day.AddDays(-1).ToString("yyyymmdd"));
+                PerformEOD(day.ToString("MMddyyyy"), day.ToString("yyyyMMdd"), day.AddDays(-1).ToString("yyyyMMdd"));
             }
         }
 
@@ -377,34 +377,53 @@ namespace RobinsonMallLinkingWBOX
         {
             //SFTP sftpClient = new SFTP();
             string batchDate = DateTime.Today.ToString("MMM-dd-yyyy");
-            string batchTime = DateTime.Now.ToString("hh-mm-tt");
+            string batchTime = DateTime.Now.ToString("hh:mm:ss tt");
 
             int batchCount = 0;
-            string status = "sent";
+            string status = "unsent";
 
             if (!Directory.Exists(folderPath))
             {
                 Directory.CreateDirectory(folderPath);
             }
 
-            DataTable checkBatchFileName = batchfileDataStorage.CheckBatchFileName();
+
+
+            DataTable checkBatchFileName = batchfileDataStorage.CheckBatchFileName(); // Ensure this gets fresh data
 
             bool fileExists = false;
+            int latestBatchCount = 0;
+
+            // Get the latest batch count for the matching file
+            var latestRow = checkBatchFileName.AsEnumerable()
+                .Where(row => row["FileName"].ToString().Length >= 11 &&
+                              row["FileName"].ToString().Substring(0, 11) == fileName) // Ensure correct file match
+                .OrderByDescending(row => Convert.ToInt32(row["Count"])) // Get the highest count
+                .FirstOrDefault();
+
+            if (latestRow != null)
+            {
+                latestBatchCount = Convert.ToInt32(latestRow["Count"]);
+            }
 
             // Check if the file already exists in the DataTable
             foreach (DataRow row in checkBatchFileName.Rows)
             {
-                string existingFileName = row["FileName"].ToString();
-                int existingBatchCount = Convert.ToInt32(row["Count"]);
+                string existingFileName = row["FileName"].ToString(); // Example: '67890214.011'
+                string extractedPart = existingFileName.Length >= 11 ? existingFileName.Substring(0, 11) : existingFileName;
+                //int existingBatchCount = Convert.ToInt32(row["Count"]);
 
-                if (existingFileName == fileName)
+                if (extractedPart == fileName)
                 {
                     fileExists = true;
-                    batchCount = existingBatchCount + 1;
+                    batchCount = latestBatchCount + 1; // Use the latest count
 
                     break; // Exit the loop once the match is found
                 }
             }
+
+
+
 
             // Create or update the batch file entry
             if (fileExists)
@@ -418,7 +437,7 @@ namespace RobinsonMallLinkingWBOX
                     Status = status
                 };
                 GlobalVar.batchcount = batchCount;
-                batchfileDataStorage.Add(batchfile, false);
+                //batchfileDataStorage.Add(batchfile, false);
             }
             else
             {
@@ -433,11 +452,11 @@ namespace RobinsonMallLinkingWBOX
                     Status = status
                 };
                 GlobalVar.batchcount = batchCount;
-                batchfileDataStorage.Add(batchfile, false);
+                //batchfileDataStorage.Add(batchfile, false);
             }
 
             // Combine folder path and file name to get the full file path
-            string fullFilePath = Path.Combine(folderPath, fileName);
+            string fullFilePath = Path.Combine(folderPath, fileName + batchCount.ToString());
 
             using (StreamWriter writer = new StreamWriter(fullFilePath))
             {
@@ -510,18 +529,33 @@ namespace RobinsonMallLinkingWBOX
 
         private void CheckFileSendingStatus()
         {
+            //if (GlobalVar.SuccessSending)
+            //{
+            //    _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Sale file Successfully sent to RLC server", ToolTipIcon.Info);
+            //    this.Close();
+            //}
+            //else if (GlobalVar.SuccessSending2 && !GlobalVar.SuccessSending)
+            //{
+            //    _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Trying to send unsent files...Successfully", ToolTipIcon.Info);
+            //}
+            //else
+            //{
+            //    _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Sales file is not sent to RLC server. Please contact your POS vendor", ToolTipIcon.Error);
+            //    //SftpConnectionChecker.StartChecking();
+            //}
+
             if (GlobalVar.SuccessSending)
             {
-                _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Sale file Successfully sent to RLC server", ToolTipIcon.Info);
+                MessageBox.Show("Sale file successfully sent to RLC server.", "Mall Linking", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
             }
             else if (GlobalVar.SuccessSending2 && !GlobalVar.SuccessSending)
             {
-                _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Trying to send unsent files...Successfully", ToolTipIcon.Info);
+                MessageBox.Show("Trying to send unsent files... Successfully.", "Mall Linking", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             else
             {
-                _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Sales file is not sent to RLC server. Please contact your POS vendor", ToolTipIcon.Error);
+                MessageBox.Show("Sales file is not sent to RLC server. Please contact your POS vendor.", "Mall Linking", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 //SftpConnectionChecker.StartChecking();
             }
         }
