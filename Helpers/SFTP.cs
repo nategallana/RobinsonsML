@@ -131,14 +131,14 @@ namespace RobinsonMallLinkingWBOX.Helpers
                 }
                 else
                 {
-                    BackupUnsentFiles(GlobalVar.DIRECTORY, logs);
+                    BackupUnsentFiles(GlobalVar.DIRECTORY, logger);
                     StartTimerIfNeeded("start", sftpHost, sftpUsername, sftpPassword);
                 }
             }
             catch(Exception ex)
             {
                 StartTimerIfNeeded("start", sftpHost, sftpUsername, sftpPassword);
-                ErrorLogger.LogError(ex.Message + " || " + ex.StackTrace);
+                //ErrorLogger.LogError(ex.Message + " || " + ex.StackTrace);
                 //SftpConnectionChecker.StartChecking();
                 HandleException(ex);
             }
@@ -217,8 +217,6 @@ namespace RobinsonMallLinkingWBOX.Helpers
                             //ShowMessageError("Sales file is not sent to RLC server. Please contact your POS vendor");
                         }
                     }
-
-
                 }
             }
         }

@@ -304,13 +304,13 @@ namespace RobinsonMallLinkingWBOX
         private void eODToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Scenarios();
-            //checkEODpreviousDates();
-            DateTime sDate = DateTime.Now;
-            DateTime eDate = DateTime.Now;
+            checkEODpreviousDates();
+            DateTime sDate = GlobalVar.StartDate;
+            DateTime eDate = DateTime.Now.AddDays(-1);
 
             string startDate = sDate.ToString("MMddyyyy");
             string endDate = eDate.ToString("MMddyyyy");
-
+             
             convertFormatDate(startDate, endDate);
         }
         #endregion
@@ -495,6 +495,11 @@ namespace RobinsonMallLinkingWBOX
         {
             Form _frm = new frmDateRange();
             _frm.Show();
+        }
+
+        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+
         }
         #endregion
 
