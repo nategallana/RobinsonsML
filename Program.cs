@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RobinsonMallLinkingWBOX.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -18,6 +19,8 @@ namespace RobinsonMallLinkingWBOX
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            DateTime newDate = DateTime.Now;
+            GlobalVar.StartDate = newDate;
             Application.Run(new frmMallLinking());
         }
     }
