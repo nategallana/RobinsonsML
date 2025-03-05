@@ -305,13 +305,13 @@ namespace RobinsonMallLinkingWBOX
         {
             Scenarios();
             checkEODpreviousDates();
-            DateTime sDate = GlobalVar.StartDate;
-            DateTime eDate = DateTime.Now.AddDays(-1);
+            //DateTime eDate = GlobalVar.StartDate;
+            //DateTime sDate = DateTime.Now.AddDays(-1);
 
-            string startDate = sDate.ToString("MMddyyyy");
-            string endDate = eDate.ToString("MMddyyyy");
+            //string startDate = sDate.ToString("MMddyyyy");
+            //string endDate = eDate.ToString("MMddyyyy");
              
-            convertFormatDate(startDate, endDate);
+            //convertFormatDate(startDate, endDate);
         }
         #endregion
 
@@ -890,104 +890,119 @@ namespace RobinsonMallLinkingWBOX
             if (result == DialogResult.OK)
             {
                 DataTable ACCdate = transactionDataStorage.GetDataAccDate();
-                foreach (DataRow row in ACCdate.Rows)
-                {
-                    //MessageBox.Show($"TransDATE: {row["TranscDate"]}");
-                    LAST_DATE_YYYYMMDD = row["TranscDate"].ToString();
-                    DateTime parsedDate = DateTime.ParseExact(LAST_DATE_YYYYMMDD, "yyyyMMdd", CultureInfo.InvariantCulture);
-                    string formattedDate = parsedDate.ToString("MM/dd/yyyy");
-                    LAST_DATE_MMDDYYYY = formattedDate;
-                    string formattedDate1 = parsedDate.ToString("yyyyMMdd");
-                    LAST_DATE_YYYYMMDD = formattedDate1;
 
-                    DateTime yesterday = parsedDate.AddDays(-1);
-                    YESTERDAY_MMDDYYYY = yesterday.ToString("MM/dd/yyyy");
-                    DateTime yesterday1 = parsedDate.AddDays(-1);
-                    YESTERDAY_YYYYMMDD = yesterday1.ToString("yyyyMMdd");
-                }
-
-                DataTable checkEODtable = eodSLSDataStorage.CheckEODtable();
-                foreach (DataRow row in checkEODtable.Rows) 
+                if (ACCdate != null && ACCdate.Rows.Count > 0)
                 {
-                    TotalRecords = int.Parse(row["CountEOD"].ToString());
-                }
+                    string dateToday = DateTime.Now.ToString("yyyyMMdd");
+                    string dateYesterday = DateTime.Now.AddDays(-1).ToString("yyyyMMdd");
 
-                DataTable EODToday = eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", "");
-                foreach (DataRow row in EODToday.Rows)
-                {
-                    EODToday1 = int.Parse(row["TranscDate"].ToString());
-                }
-
-                DataTable EODYesterday = eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", "");
-                foreach (DataRow row in EODYesterday.Rows)
-                {
-                    EODYesterday1 = int.Parse(row["TranscDate"].ToString());
-                }
-
-                DataTable perTrans = eodSLSDataStorage.SelectPERTRANS("orderdata", "AccDate", "");
-                foreach (DataRow row in perTrans.Rows)
-                {
-                    perTrans1 = int.Parse(row["AccDate"].ToString());
-                }
-
-                DataTable perTransYestday = eodSLSDataStorage.SelectPERTRANS("orderdata", "AccDate", "");
-                foreach (DataRow row in perTransYestday.Rows)
-                {
-                    perTransYestday1 = int.Parse(row["AccDate"].ToString());
-                }
-
-                try
-                {
-                    #region LOGIC
-                    // Scenario 1: Generate EOD for today with sales (if sales exist today and no EOD for today)
-                    if (EODYesterday1 == 0 && perTrans1 != 0 && EODToday1 == 0)
+                    foreach (DataRow row in ACCdate.Rows)
                     {
-                        convertFormatDate(LAST_DATE_MMDDYYYY, YESTERDAY_MMDDYYYY);
+                        //MessageBox.Show($"TransDATE: {row["TranscDate"]}");
+                        LAST_DATE_YYYYMMDD = row["TranscDate"].ToString();
+                        DateTime parsedDate = DateTime.ParseExact(LAST_DATE_YYYYMMDD, "yyyyMMdd", CultureInfo.InvariantCulture);
+                        string formattedDate = parsedDate.ToString("MM/dd/yyyy");
+                        LAST_DATE_MMDDYYYY = formattedDate;
+                        string formattedDate1 = parsedDate.ToString("yyyyMMdd");
+                        LAST_DATE_YYYYMMDD = formattedDate1;
+
+                        DateTime yesterday = parsedDate.AddDays(-1);
+                        YESTERDAY_MMDDYYYY = yesterday.ToString("MM/dd/yyyy");
+                        DateTime yesterday1 = parsedDate.AddDays(-1);
+                        YESTERDAY_YYYYMMDD = yesterday1.ToString("yyyyMMdd");
+
                     }
-                    // Scenario 2: EOD has already been performed for today
-                    else if (EODToday1 != 0)
-                    {
-                        MessageBox.Show("EOD has already been performed for today.", "EOD Status", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        return;
-                    }
-                    // Scenario 3: No EOD record found for yesterday
-                    else if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
-                    {
-                        MessageBox.Show("No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.", "Missing EOD", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        Scenarios();
-                        return;
-                    }
-                    // Scenario 4: No sales today, user confirmation for EOD
-                    else if (EODToday1 == 0 && perTrans1 == 0)
-                    {
-                        DialogResult result1 = MessageBox.Show("No sales for today. Do you still want to perform EOD for today?", "EOD Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-                        if (result1 == DialogResult.Yes)
+                    DataTable checkEODtable = eodSLSDataStorage.CheckEODtable();
+                    foreach (DataRow row in checkEODtable.Rows)
+                    {
+                        TotalRecords = int.Parse(row["CountEOD"].ToString());
+                    }
+
+                    DataTable EODToday = eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", dateToday);
+                    foreach (DataRow row in EODToday.Rows)
+                    {
+                        EODToday1 = int.Parse(row["COUNT(*)"].ToString());
+                    }
+
+
+                    DataTable EODYesterday = eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", dateYesterday);
+                    foreach (DataRow row in EODYesterday.Rows)
+                    {
+                        EODYesterday1 = int.Parse(row["COUNT(*)"].ToString());
+                    }
+
+                    DataTable perTrans = eodSLSDataStorage.SelectPERTRANS("orderdata", "AccDate", dateToday);
+                    foreach (DataRow row in perTrans.Rows)
+                    {
+                        perTrans1 = int.Parse(row["COUNT(*)"].ToString());
+                    }
+
+                    DataTable perTransYestday = eodSLSDataStorage.SelectPERTRANS("orderdata", "AccDate", dateYesterday);
+                    foreach (DataRow row in perTransYestday.Rows)
+                    {
+                        perTransYestday1 = int.Parse(row["COUNT(*)"].ToString());
+                    }
+
+
+
+
+                    try
+                    {
+                        #region LOGIC
+                        // Scenario 1: Generate EOD for today with sales (if sales exist today and no EOD for today)
+                        if (EODYesterday1 != 0 && perTrans1 != 0 && EODToday1 == 0)
                         {
                             convertFormatDate(LAST_DATE_MMDDYYYY, YESTERDAY_MMDDYYYY);
                         }
-                        else
+                        // Scenario 2: EOD has already been performed for today
+                        else if (EODToday1 != 0)
                         {
+                            MessageBox.Show("EOD has already been performed for today.", "EOD Status", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             return;
                         }
-                    }
-                    // Scenario 5: Fallback case for generating EOD
-                    else
-                    {
-                        convertFormatDate(LAST_DATE_MMDDYYYY, YESTERDAY_MMDDYYYY);
-                        //MessageBox.Show("Generating EOD.", "EOD Generation", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    #endregion
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"An unexpected error occurred: {ex.Message}",
-                                    "Error",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Error);
-                }
+                        // Scenario 3: No EOD record found for yesterday
+                        //else if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
+                        //{
+                        //    MessageBox.Show("No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.", "Missing EOD", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        //    Scenarios();
+                        //    return;
+                        //}
+                        // Scenario 4: No sales today, user confirmation for EOD
+                        else if (EODToday1 == 0 && perTrans1 == 0)
+                        {
+                            DialogResult result1 = MessageBox.Show("No sales for today. Do you still want to perform EOD for today?", "EOD Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-                return;
+                            if (result1 == DialogResult.Yes)
+                            {
+                                convertFormatDate(LAST_DATE_MMDDYYYY, YESTERDAY_MMDDYYYY);
+                            }
+                            else
+                            {
+                                return;
+                            }
+                        }
+                        // Scenario 5: Fallback case for generating EOD
+                        else
+                        {
+                            convertFormatDate(LAST_DATE_MMDDYYYY, YESTERDAY_MMDDYYYY);
+                            //MessageBox.Show("Generating EOD.", "EOD Generation", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        #endregion
+
+
+
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"An unexpected error occurred: {ex.Message}",
+                                        "Error",
+                                        MessageBoxButtons.OK,
+                                        MessageBoxIcon.Error);
+                    }
+
+                    return;
+                }
             }
         }
 
@@ -1027,6 +1042,41 @@ namespace RobinsonMallLinkingWBOX
                 }
                 return;
             }
+
+            else if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
+            {
+                MessageBox.Show("No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.", "Missing EOD", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                // Close the different application (e.g., "OtherApp")
+                string targetProcessName = "wDesktop"; // Replace with the actual process name without ".exe"
+
+                var processes = Process.GetProcessesByName(targetProcessName);
+                if (processes.Any())
+                {
+                    foreach (var process in processes)
+                    {
+                        try
+                        {
+                            process.Kill();
+                            process.WaitForExit();
+                            MessageBox.Show($"Not allowed to transact at this time.", "Application Closed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
+                                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                else
+                {
+                    MessageBox.Show($"No running instance of '{targetProcessName}' was found.",
+                                    "Application Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                return;
+            }
+
+
         }
 
         public void convertFormatDate(string startDate, string endDate) 
