@@ -90,6 +90,9 @@ namespace RobinsonMallLinkingWBOX
 #pragma warning disable CS0169 // The field 'frmMallLinking._notifyIcon' is never used
         private static NotifyIcon _notifyIcon;
 #pragma warning restore CS0169 // The field 'frmMallLinking._notifyIcon' is never used
+
+        private BackgroundWorker backgroundWorker;
+
         public frmMallLinking()
         {
             InitializeComponent();
@@ -142,11 +145,16 @@ namespace RobinsonMallLinkingWBOX
                 voidDataStorage = new VoidDataStorage();
                 //eodDataStorage = new EODDataStorage();
                 eodSLSDataStorage = new EODSLSDataStorage();
+                backgroundWorker = new BackgroundWorker();
+                backgroundWorker.DoWork += backgroundWorker1_DoWork;
+                backgroundWorker.RunWorkerCompleted += BackgroundWorker1_RunWorkerCompleted;
 
                 notifyIcon1.BalloonTipText = " ";
                 notifyIcon1.ShowBalloonTip(2000);
 
                 sftpConnectionChecker.StartChecking();
+                // Start the background worker
+                backgroundWorker.RunWorkerAsync();
 
 
 
@@ -303,7 +311,7 @@ namespace RobinsonMallLinkingWBOX
 
         private void eODToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Scenarios();
+            //Scenarios();
             checkEODpreviousDates();
             //DateTime eDate = GlobalVar.StartDate;
             //DateTime sDate = DateTime.Now.AddDays(-1);
@@ -501,7 +509,22 @@ namespace RobinsonMallLinkingWBOX
         {
 
         }
+
+        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
+        {
+            RunScenarios();
+        }
+
+        private void BackgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (e.Error != null)
+            {
+                MessageBox.Show($"An error occurred: {e.Error.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         #endregion
+
 
         #region App Closing Logic (During 4 AM to 9 AM)
         private void CheckTimeAndCloseApp(object sender, ElapsedEventArgs e)
@@ -1006,77 +1029,136 @@ namespace RobinsonMallLinkingWBOX
             }
         }
 
-        public void Scenarios() 
+        //public void Scenarios()
+        //{
+        //    DateTime now = DateTime.Now;
+
+        //    if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
+        //    {
+        //        MessageBox.Show("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+        //        // Close the different application (e.g., "OtherApp")
+        //        string targetProcessName = "wDesktop"; // Replace with the actual process name without ".exe"
+
+        //        var processes = Process.GetProcessesByName(targetProcessName);
+        //        if (processes.Any())
+        //        {
+        //            foreach (var process in processes)
+        //            {
+        //                try
+        //                {
+        //                    process.Kill();
+        //                    process.WaitForExit();
+        //                    MessageBox.Show($"Not allowed to transact at this time.", "Application Closed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+        //                }
+        //                catch (Exception ex)
+        //                {
+        //                    MessageBox.Show($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
+        //                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        //                }
+        //            }
+        //        }
+        //        else
+        //        {
+        //            MessageBox.Show($"No running instance of '{targetProcessName}' was found.",
+        //                            "Application Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        //        }
+        //        return;
+        //    }
+
+        //    else if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
+        //    {
+        //        MessageBox.Show("No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.", "Missing EOD", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+        //        // Close the different application (e.g., "OtherApp")
+        //        string targetProcessName = "wDesktop"; // Replace with the actual process name without ".exe"
+
+        //        var processes = Process.GetProcessesByName(targetProcessName);
+        //        if (processes.Any())
+        //        {
+        //            foreach (var process in processes)
+        //            {
+        //                try
+        //                {
+        //                    process.Kill();
+        //                    process.WaitForExit();
+        //                    MessageBox.Show($"Not allowed to transact at this time.", "Application Closed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+        //                }
+        //                catch (Exception ex)
+        //                {
+        //                    MessageBox.Show($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
+        //                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        //                }
+        //            }
+        //        }
+        //        else
+        //        {
+        //            MessageBox.Show($"No running instance of '{targetProcessName}' was found.",
+        //                            "Application Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        //        }
+        //        return;
+        //    }
+        //}
+
+
+
+
+
+
+        private void RunScenarios()
         {
             DateTime now = DateTime.Now;
 
             if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
             {
-                MessageBox.Show("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-
-                // Close the different application (e.g., "OtherApp")
-                string targetProcessName = "wDesktop"; // Replace with the actual process name without ".exe"
-
-                var processes = Process.GetProcessesByName(targetProcessName);
-                if (processes.Any())
-                {
-                    foreach (var process in processes)
-                    {
-                        try
-                        {
-                            process.Kill(); 
-                            process.WaitForExit();
-                            MessageBox.Show($"Not allowed to transact at this time.", "Application Closed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
-                                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                    }
-                }
-                else
-                {
-                    MessageBox.Show($"No running instance of '{targetProcessName}' was found.",
-                                    "Application Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                ShowMessage("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted", MessageBoxIcon.Warning);
+                CloseApplication("wDesktop");
                 return;
             }
 
-            else if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
+            if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
             {
-                MessageBox.Show("No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.", "Missing EOD", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-
-                // Close the different application (e.g., "OtherApp")
-                string targetProcessName = "wDesktop"; // Replace with the actual process name without ".exe"
-
-                var processes = Process.GetProcessesByName(targetProcessName);
-                if (processes.Any())
-                {
-                    foreach (var process in processes)
-                    {
-                        try
-                        {
-                            process.Kill();
-                            process.WaitForExit();
-                            MessageBox.Show($"Not allowed to transact at this time.", "Application Closed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
-                                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                    }
-                }
-                else
-                {
-                    MessageBox.Show($"No running instance of '{targetProcessName}' was found.",
-                                    "Application Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                ShowMessage("No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.", "Missing EOD", MessageBoxIcon.Warning);
+                CloseApplication("wDesktop");
                 return;
             }
+        }
 
+        private void CloseApplication(string targetProcessName)
+        {
+            var processes = Process.GetProcessesByName(targetProcessName);
+            if (processes.Length > 0)
+            {
+                foreach (var process in processes)
+                {
+                    try
+                    {
+                        process.Kill();
+                        process.WaitForExit();
+                        ShowMessage($"Not allowed to transact at this time.", "Application Closed", MessageBoxIcon.Exclamation);
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}", "Error", MessageBoxIcon.Error);
+                    }
+                }
+            }
+            else
+            {
+                ShowMessage($"No running instance of '{targetProcessName}' was found.", "Application Not Found", MessageBoxIcon.Information);
+            }
+        }
 
+        private void ShowMessage(string text, string caption, MessageBoxIcon icon)
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action(() => MessageBox.Show(text, caption, MessageBoxButtons.OK, icon)));
+            }
+            else
+            {
+                MessageBox.Show(text, caption, MessageBoxButtons.OK, icon);
+            }
         }
 
         public void convertFormatDate(string startDate, string endDate) 

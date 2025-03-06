@@ -38,6 +38,11 @@ namespace RobinsonMallLinkingWBOX
             this.viewDataSentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
+            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.timer2 = new System.Windows.Forms.Timer(this.components);
+            this.timer3 = new System.Windows.Forms.Timer(this.components);
+            this.timer4 = new System.Windows.Forms.Timer(this.components);
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -98,6 +103,10 @@ namespace RobinsonMallLinkingWBOX
             this.notifyIcon1.Visible = true;
             this.notifyIcon1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon1_MouseDoubleClick);
             // 
+            // backgroundWorker1
+            // 
+            this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
+            // 
             // frmMallLinking
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -123,6 +132,11 @@ namespace RobinsonMallLinkingWBOX
         private System.Windows.Forms.NotifyIcon notifyIcon1;
         private System.Windows.Forms.ToolStripMenuItem eODToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem viewDataSentToolStripMenuItem;
+        private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.Timer timer2;
+        private System.Windows.Forms.Timer timer3;
+        private System.Windows.Forms.Timer timer4;
     }
 }
 
