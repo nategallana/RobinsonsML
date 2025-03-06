@@ -39,6 +39,7 @@ namespace RobinsonMallLinkingWBOX
         public Configuration configuration = null;
         public Settings settings = null;
         public string xml, host, username, password, dir, tenantname, terminal = null;
+        private System.Windows.Forms.Timer scenarioTimer;
 
         private System.Timers.Timer eodTimer;
         private System.Timers.Timer appCloseTimer;
@@ -148,6 +149,12 @@ namespace RobinsonMallLinkingWBOX
                 backgroundWorker = new BackgroundWorker();
                 backgroundWorker.DoWork += backgroundWorker1_DoWork;
                 backgroundWorker.RunWorkerCompleted += BackgroundWorker1_RunWorkerCompleted;
+
+                // Initialize and configure the timer
+                scenarioTimer = new System.Windows.Forms.Timer();
+                scenarioTimer.Interval = 60000; // Run every 60 seconds (adjust as needed)
+                scenarioTimer.Tick += ScenarioTimer_Tick;
+                scenarioTimer.Start(); // Start the timer
 
                 notifyIcon1.BalloonTipText = " ";
                 notifyIcon1.ShowBalloonTip(2000);
@@ -512,7 +519,7 @@ namespace RobinsonMallLinkingWBOX
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            RunScenarios();
+            //RunScenarios();
         }
 
         private void BackgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -566,6 +573,16 @@ namespace RobinsonMallLinkingWBOX
                 //MessageBox.Show($"No running instance of '{targetProcessName}' was found.", "Application Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
+
+        private void ScenarioTimer_Tick(object sender, EventArgs e)
+        {
+            if (!backgroundWorker1.IsBusy)
+            {
+                backgroundWorker1.RunWorkerAsync();
+            }
+        }
+
+
         #endregion
 
         #region Perform EOD
@@ -924,13 +941,15 @@ namespace RobinsonMallLinkingWBOX
                         //MessageBox.Show($"TransDATE: {row["TranscDate"]}");
                         LAST_DATE_YYYYMMDD = row["TranscDate"].ToString();
                         DateTime parsedDate = DateTime.ParseExact(LAST_DATE_YYYYMMDD, "yyyyMMdd", CultureInfo.InvariantCulture);
-                        string formattedDate = parsedDate.ToString("MM/dd/yyyy");
+                        //string formattedDate = parsedDate.ToString("MMddyyyy");
+
+                        string formattedDate = DateTime.Now.ToString("MMddyyyy");
                         LAST_DATE_MMDDYYYY = formattedDate;
                         string formattedDate1 = parsedDate.ToString("yyyyMMdd");
                         LAST_DATE_YYYYMMDD = formattedDate1;
 
-                        DateTime yesterday = parsedDate.AddDays(-1);
-                        YESTERDAY_MMDDYYYY = yesterday.ToString("MM/dd/yyyy");
+                        DateTime yesterday = DateTime.Now.AddDays(-1);
+                        YESTERDAY_MMDDYYYY = yesterday.ToString("MMddyyyy");
                         DateTime yesterday1 = parsedDate.AddDays(-1);
                         YESTERDAY_YYYYMMDD = yesterday1.ToString("yyyyMMdd");
 
@@ -976,7 +995,7 @@ namespace RobinsonMallLinkingWBOX
                         // Scenario 1: Generate EOD for today with sales (if sales exist today and no EOD for today)
                         if (EODYesterday1 != 0 && perTrans1 != 0 && EODToday1 == 0)
                         {
-                            convertFormatDate(LAST_DATE_MMDDYYYY, YESTERDAY_MMDDYYYY);
+                            convertFormatDate(LAST_DATE_MMDDYYYY, LAST_DATE_MMDDYYYY);
                         }
                         // Scenario 2: EOD has already been performed for today
                         else if (EODToday1 != 0)
@@ -998,7 +1017,7 @@ namespace RobinsonMallLinkingWBOX
 
                             if (result1 == DialogResult.Yes)
                             {
-                                convertFormatDate(LAST_DATE_MMDDYYYY, YESTERDAY_MMDDYYYY);
+                                convertFormatDate(LAST_DATE_MMDDYYYY, LAST_DATE_MMDDYYYY);
                             }
                             else
                             {
@@ -1008,7 +1027,7 @@ namespace RobinsonMallLinkingWBOX
                         // Scenario 5: Fallback case for generating EOD
                         else
                         {
-                            convertFormatDate(LAST_DATE_MMDDYYYY, YESTERDAY_MMDDYYYY);
+                            convertFormatDate(YESTERDAY_MMDDYYYY, LAST_DATE_MMDDYYYY);
                             //MessageBox.Show("Generating EOD.", "EOD Generation", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                         #endregion
