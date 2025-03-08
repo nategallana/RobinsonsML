@@ -28,12 +28,38 @@ namespace RobinsonMallLinkingWBOX.Helpers
             }
         }
 
+        //public static void StartChecking()
+        //{
+        //    if (_cancellationTokenSource.IsCancellationRequested)
+        //    {
+        //        _cancellationTokenSource.Dispose();
+        //        _cancellationTokenSource = new CancellationTokenSource();
+        //    }
+
+        //    if (_connectionCheckTask == null || _connectionCheckTask.IsCompleted || _connectionCheckTask.IsFaulted)
+        //    {
+        //        _connectionCheckTask = Task.Run(async () =>
+        //        {
+        //            try
+        //            {
+        //                await CheckConnectionLoop(_cancellationTokenSource.Token);
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                ErrorLogger.LogError($"Connection check loop failed: {ex.Message} || {ex.StackTrace}");
+        //            }
+        //        });
+        //    }
+        //}
+
+
         public static void StopChecking()
         {
             _cancellationTokenSource.Cancel();
             //_notifyIcon.Visible = false; // Hide the tray icon
             //_notifyIcon.Dispose(); // Dispose the tray icon
         }
+
         private static async Task CheckConnectionLoop(CancellationToken cancellationToken)
         {
             //_notifyIcon = new NotifyIcon

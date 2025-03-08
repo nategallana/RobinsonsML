@@ -19,6 +19,7 @@ using System.Windows.Forms;
 using System.Xml.Linq;
 using Tarsier.Extensions;
 using System.Runtime.InteropServices.ComTypes;
+using System.Threading;
 
 namespace RobinsonMallLinkingWBOX
 {
@@ -39,7 +40,9 @@ namespace RobinsonMallLinkingWBOX
         public Configuration configuration = null;
         public Settings settings = null;
         public string xml, host, username, password, dir, tenantname, terminal = null;
-        private System.Windows.Forms.Timer scenarioTimer;
+        //private System.Windows.Forms.Timer scenarioTimer;
+        private System.Windows.Forms.Timer workerTimer;
+
 
         private System.Timers.Timer eodTimer;
         private System.Timers.Timer appCloseTimer;
@@ -93,7 +96,7 @@ namespace RobinsonMallLinkingWBOX
 #pragma warning restore CS0169 // The field 'frmMallLinking._notifyIcon' is never used
 
         private BackgroundWorker backgroundWorker;
-
+            
         public frmMallLinking()
         {
             InitializeComponent();
@@ -144,26 +147,36 @@ namespace RobinsonMallLinkingWBOX
                 paymentDataStorage = new PaymentDataStorage();
                 taxDataStorage = new TaxDataStorage();
                 voidDataStorage = new VoidDataStorage();
-                //eodDataStorage = new EODDataStorage();
                 eodSLSDataStorage = new EODSLSDataStorage();
-                backgroundWorker = new BackgroundWorker();
-                backgroundWorker.DoWork += backgroundWorker1_DoWork;
-                backgroundWorker.RunWorkerCompleted += BackgroundWorker1_RunWorkerCompleted;
-
-                // Initialize and configure the timer
-                scenarioTimer = new System.Windows.Forms.Timer();
-                scenarioTimer.Interval = 60000; // Run every 60 seconds (adjust as needed)
-                scenarioTimer.Tick += ScenarioTimer_Tick;
-                scenarioTimer.Start(); // Start the timer
-
-                notifyIcon1.BalloonTipText = " ";
-                notifyIcon1.ShowBalloonTip(2000);
 
                 sftpConnectionChecker.StartChecking();
-                // Start the background worker
-                backgroundWorker.RunWorkerAsync();
 
+                try
+                {
+                    if (backgroundWorker == null)
+                    {
+                        backgroundWorker = new BackgroundWorker();
+                        backgroundWorker.WorkerSupportsCancellation = true; // Enable cancellation
+                        backgroundWorker.DoWork += backgroundWorker1_DoWork;
+                        backgroundWorker.RunWorkerCompleted += BackgroundWorker1_RunWorkerCompleted;
+                    }
 
+                    // Ensure worker is not restarted from RunWorkerCompleted
+                    workerTimer = new System.Windows.Forms.Timer();
+                    workerTimer.Interval = 10000; // Run every 10 seconds
+                    workerTimer.Tick += (s, ev) =>
+                    {
+                        if (!backgroundWorker.IsBusy)
+                        {
+                            backgroundWorker.RunWorkerAsync();
+                        }
+                    };
+                    workerTimer.Start();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred during form load:\n{ex.Message}", "Check Settings", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
 
                 BackupXML(xml);
             }
@@ -314,7 +327,6 @@ namespace RobinsonMallLinkingWBOX
             Form _frm = new FileView();
             _frm.Show();
         }
-
 
         private void eODToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -519,35 +531,163 @@ namespace RobinsonMallLinkingWBOX
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            //RunScenarios();
-        }
+            while (!backgroundWorker.CancellationPending)
+            {
+                string targetProcessName = "notepad";
+                var processes = Process.GetProcessesByName(targetProcessName);
 
+                if (processes.Length > 0)
+                {
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        RunScenarios(targetProcessName);
+                    });
+                }
+
+                Thread.Sleep(3000); // Wait for 3 seconds before checking again
+            }
+        }
         private void BackgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             if (e.Error != null)
             {
                 MessageBox.Show($"An error occurred: {e.Error.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
 
+            // Restart the background worker
+            if (!backgroundWorker.IsBusy)
+            {
+                backgroundWorker.RunWorkerAsync();
+            }
+        }
         #endregion
 
 
-        #region App Closing Logic (During 4 AM to 9 AM)
-        private void CheckTimeAndCloseApp(object sender, ElapsedEventArgs e)
-        {
-            DateTime now = DateTime.Now;
 
-            // Check if the time is between 4:00 AM and 9:00 AM
-            if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
+        #region App Closing Logic (During 4 AM to 9 AM)
+        private void RunScenarios(string targetProcessName)
+        {
+            string lastData;
+            CheckSalesData(out lastData);
+
+            DateTime now = DateTime.Now;
+            DateTime lastDataDate = DateTime.ParseExact(lastData, "MMddyyyy", CultureInfo.InvariantCulture);
+
+
+            if (lastDataDate.Date != now.Date) // Ensure lastData is compared as DateTime
             {
-                CloseOtherAppIfRunning();
+                if (now.TimeOfDay >= new TimeSpan(0, 0, 0) && now.TimeOfDay < new TimeSpan(3, 59, 0))
+                {
+                    return; // Allow transactions before 4:00 AM
+                }
+                else if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
+                {
+                    DialogResult result = ShowMessage(
+                        "Transactions are not allowed between 4:00 AM and 9:00 AM.",
+                        "Transaction Restricted",
+                        MessageBoxIcon.Warning
+                    );
+
+                    if (result == DialogResult.OK)
+                    {
+                        CloseOtherAppIfRunning(targetProcessName);
+                    }
+                }
+                else
+                {
+                    DialogResult result = ShowMessage(
+                    $"Different system date detected. Business Date was '{lastData}'",
+                    "Transaction Restricted",
+                    MessageBoxIcon.Warning
+                );
+
+                    if (result == DialogResult.OK)
+                    {
+                        CloseOtherAppIfRunning(targetProcessName);
+                    }
+                }
+            }
+            else if (lastDataDate.Date == now.Date)
+            {
+                if (now.TimeOfDay >= new TimeSpan(0, 0, 0) && now.TimeOfDay < new TimeSpan(3, 59, 0))
+                {
+                    return; // Allow transactions before 4:00 AM
+                }
+                else if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
+                {
+                    DialogResult result = ShowMessage(
+                        "No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.",
+                        "Missing EOD",
+                        MessageBoxIcon.Warning
+                    );
+
+                    if (result == DialogResult.OK)
+                    {
+                        CloseOtherAppIfRunning(targetProcessName);
+                    }
+                }
+                else
+                {
+                    DialogResult result = ShowMessage(
+                    $"Different system date detected. Business Date was '{lastData}'",
+                    "Transaction Restricted",
+                    MessageBoxIcon.Warning
+                );
+
+                    if (result == DialogResult.OK)
+                    {
+                        CloseOtherAppIfRunning(targetProcessName);
+                    }
+                }
             }
         }
 
-        private void CloseOtherAppIfRunning()
+        private void CloseApplication(string targetProcessName)
         {
-            string targetProcessName = "wDesktop"; // Replace with the actual process name (without .exe)
+            var processes = Process.GetProcessesByName(targetProcessName);
+            foreach (var process in processes)
+            {
+                try
+                {
+                    process.Kill();
+                    process.WaitForExit(); // Ensure process is fully closed before continuing
+                }
+                catch (Exception ex)
+                {
+                    ShowMessage($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
+                                "Error", MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private DialogResult ShowMessage(string text, string caption, MessageBoxIcon icon)
+        {
+            if (InvokeRequired)
+            {
+                return (DialogResult)Invoke(new Func<DialogResult>(() =>
+                    MessageBox.Show(this, text, caption, MessageBoxButtons.OK, icon)));
+            }
+            else
+            {
+                return MessageBox.Show(this, text, caption, MessageBoxButtons.OK, icon);
+            }
+        }
+
+
+        private void CheckTimeAndCloseApp(object sender, ElapsedEventArgs e)
+        {
+            DateTime now = DateTime.Now;
+            string targetProcessName = "wDesktop";
+            // Check if the time is between 4:00 AM and 9:00 AM
+            if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
+            {
+                CloseOtherAppIfRunning(targetProcessName);
+            }
+        }
+
+        private void CloseOtherAppIfRunning(string targetProcessName)
+        {
+            //targetProcessName = "wDesktop"; // Replace with the actual process name (without .exe)
 
             var processes = Process.GetProcessesByName(targetProcessName);
             if (processes.Any())
@@ -1048,6 +1188,37 @@ namespace RobinsonMallLinkingWBOX
             }
         }
 
+
+        //public void CheckSalesData(out DateTime lastData)
+        //{
+        //    lastData = DateTime.MinValue;
+
+        //    DataTable ACCdate = transactionDataStorage.GetDataAccDate();
+
+        //    if (ACCdate != null && ACCdate.Rows.Count > 0)
+        //    {
+        //        DataRow row = ACCdate.Rows[0]; // Get the first row
+        //        string lastDateTimeRaw = row["TranscDate"].ToString(); // Assuming it's stored as yyyyMMddHHmmss
+
+        //        // Parse the combined date and time
+        //        lastData = DateTime.ParseExact(lastDateTimeRaw, "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
+        //    }
+        //}
+        public void CheckSalesData(out string lastData)
+        {
+            lastData = string.Empty;
+
+            DataTable ACCdate = transactionDataStorage.GetDataAccDate();
+
+            if (ACCdate != null && ACCdate.Rows.Count > 0)
+            {
+                DataRow row = ACCdate.Rows[0]; // Get the first row
+                string lastDateRaw = row["TranscDate"].ToString();
+                DateTime parsedDate = DateTime.ParseExact(lastDateRaw, "yyyyMMdd", CultureInfo.InvariantCulture);
+                lastData = parsedDate.ToString("MMddyyyy");
+            }
+        }
+
         //public void Scenarios()
         //{
         //    DateTime now = DateTime.Now;
@@ -1119,66 +1290,6 @@ namespace RobinsonMallLinkingWBOX
         //    }
         //}
 
-
-
-
-
-
-        private void RunScenarios()
-        {
-            DateTime now = DateTime.Now;
-
-            if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
-            {
-                ShowMessage("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted", MessageBoxIcon.Warning);
-                CloseApplication("wDesktop");
-                return;
-            }
-
-            if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
-            {
-                ShowMessage("No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.", "Missing EOD", MessageBoxIcon.Warning);
-                CloseApplication("wDesktop");
-                return;
-            }
-        }
-
-        private void CloseApplication(string targetProcessName)
-        {
-            var processes = Process.GetProcessesByName(targetProcessName);
-            if (processes.Length > 0)
-            {
-                foreach (var process in processes)
-                {
-                    try
-                    {
-                        process.Kill();
-                        process.WaitForExit();
-                        ShowMessage($"Not allowed to transact at this time.", "Application Closed", MessageBoxIcon.Exclamation);
-                    }
-                    catch (Exception ex)
-                    {
-                        ShowMessage($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}", "Error", MessageBoxIcon.Error);
-                    }
-                }
-            }
-            else
-            {
-                ShowMessage($"No running instance of '{targetProcessName}' was found.", "Application Not Found", MessageBoxIcon.Information);
-            }
-        }
-
-        private void ShowMessage(string text, string caption, MessageBoxIcon icon)
-        {
-            if (InvokeRequired)
-            {
-                BeginInvoke(new Action(() => MessageBox.Show(text, caption, MessageBoxButtons.OK, icon)));
-            }
-            else
-            {
-                MessageBox.Show(text, caption, MessageBoxButtons.OK, icon);
-            }
-        }
 
         public void convertFormatDate(string startDate, string endDate) 
         {
