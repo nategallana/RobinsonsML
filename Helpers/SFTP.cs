@@ -188,8 +188,12 @@ namespace RobinsonMallLinkingWBOX.Helpers
                                     //    continue;
                                     //}
 
-                                    TransferOperationResult transferResult = session.PutFiles(unsentFile, remoteFilePath, false, transferOptions);
-                                    transferResult.Check();
+                                    TransferOperationResult transferResult = session.PutFiles(
+                                    Path.Combine(GlobalVar.DIRECTORY, "*.*"), // Source: All files
+                                    "/", // Destination: Root folder or specify a path
+                                    false, // Do not remove original files after upload
+                                    transferOptions
+                                    );
 
                                     logger.log(fileName,GlobalVar.batchcount, "Sent");
 
