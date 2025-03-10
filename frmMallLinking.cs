@@ -45,7 +45,7 @@ namespace RobinsonMallLinkingWBOX
 
 
         private System.Timers.Timer eodTimer;
-        private System.Timers.Timer appCloseTimer;
+        private System.Windows.Forms.Timer appCloseTimer;
         private bool isEODTriggered = false;
         private readonly object eodLock = new object();
 
@@ -95,7 +95,7 @@ namespace RobinsonMallLinkingWBOX
         private static NotifyIcon _notifyIcon;
 #pragma warning restore CS0169 // The field 'frmMallLinking._notifyIcon' is never used
 
-        private BackgroundWorker backgroundWorker;
+        //private BackgroundWorker backgroundWorker;
             
         public frmMallLinking()
         {
@@ -149,36 +149,11 @@ namespace RobinsonMallLinkingWBOX
                 voidDataStorage = new VoidDataStorage();
                 eodSLSDataStorage = new EODSLSDataStorage();
 
-                sftpConnectionChecker.StartChecking();
+                sftpConnectionChecker.StartChecking(); // Keep this if you're using SFTP monitoring
 
-                try
-                {
-                    if (backgroundWorker == null)
-                    {
-                        backgroundWorker = new BackgroundWorker();
-                        backgroundWorker.WorkerSupportsCancellation = true; // Enable cancellation
-                        backgroundWorker.DoWork += backgroundWorker1_DoWork;
-                        backgroundWorker.RunWorkerCompleted += BackgroundWorker1_RunWorkerCompleted;
-                    }
+                // No more backgroundWorker or workerTimer needed here!
 
-                    // Ensure worker is not restarted from RunWorkerCompleted
-                    workerTimer = new System.Windows.Forms.Timer();
-                    workerTimer.Interval = 10000; // Run every 10 seconds
-                    workerTimer.Tick += (s, ev) =>
-                    {
-                        if (!backgroundWorker.IsBusy)
-                        {
-                            backgroundWorker.RunWorkerAsync();
-                        }
-                    };
-                    workerTimer.Start();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"An error occurred during form load:\n{ex.Message}", "Check Settings", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-
-                BackupXML(xml);
+                BackupXML(xml); // Keep this if still needed
             }
             catch (Exception ex)
             {
@@ -230,11 +205,18 @@ namespace RobinsonMallLinkingWBOX
 
         private void InitializeAppCloseHandler()
         {
-            appCloseTimer = new System.Timers.Timer(2000); // Check every minute
-            appCloseTimer.Elapsed += CheckTimeAndCloseApp;
+            appCloseTimer = new System.Windows.Forms.Timer();
+            appCloseTimer.Interval = 2000; // Check every 2 seconds
+            appCloseTimer.Tick += AppCloseTimer_Tick;
             appCloseTimer.Start();
         }
-
+        private void AppCloseTimer_Tick(object sender, EventArgs e)
+        {
+            if (IsProcessRunning("notepad"))
+            {
+                RunScenarios("notepad");
+            }
+        }
         private void CheckEODTrigger(object sender, ElapsedEventArgs e)
         {
             DateTime now = DateTime.Now;
@@ -528,38 +510,6 @@ namespace RobinsonMallLinkingWBOX
         {
 
         }
-
-        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
-        {
-            while (!backgroundWorker.CancellationPending)
-            {
-                string targetProcessName = "notepad";
-                var processes = Process.GetProcessesByName(targetProcessName);
-
-                if (processes.Length > 0)
-                {
-                    this.Invoke((MethodInvoker)delegate
-                    {
-                        RunScenarios(targetProcessName);
-                    });
-                }
-
-                Thread.Sleep(3000); // Wait for 3 seconds before checking again
-            }
-        }
-        private void BackgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            if (e.Error != null)
-            {
-                MessageBox.Show($"An error occurred: {e.Error.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-
-            // Restart the background worker
-            if (!backgroundWorker.IsBusy)
-            {
-                backgroundWorker.RunWorkerAsync();
-            }
-        }
         #endregion
 
 
@@ -590,7 +540,20 @@ namespace RobinsonMallLinkingWBOX
 
                     if (result == DialogResult.OK)
                     {
-                        CloseOtherAppIfRunning(targetProcessName);
+                        CloseOtherAppIfRunning();
+                    }
+                }
+                else if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
+                {
+                    DialogResult result = ShowMessage(
+                        "No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.",
+                        "Missing EOD",
+                        MessageBoxIcon.Warning
+                    );
+
+                    if (result == DialogResult.OK)
+                    {
+                        CloseOtherAppIfRunning();
                     }
                 }
                 else
@@ -603,7 +566,7 @@ namespace RobinsonMallLinkingWBOX
 
                     if (result == DialogResult.OK)
                     {
-                        CloseOtherAppIfRunning(targetProcessName);
+                        CloseOtherAppIfRunning();
                     }
                 }
             }
@@ -623,7 +586,7 @@ namespace RobinsonMallLinkingWBOX
 
                     if (result == DialogResult.OK)
                     {
-                        CloseOtherAppIfRunning(targetProcessName);
+                        CloseOtherAppIfRunning();
                     }
                 }
                 else
@@ -636,35 +599,30 @@ namespace RobinsonMallLinkingWBOX
 
                     if (result == DialogResult.OK)
                     {
-                        CloseOtherAppIfRunning(targetProcessName);
+                        CloseOtherAppIfRunning();
                     }
                 }
             }
-        }
-
-        private void CloseApplication(string targetProcessName)
-        {
-            var processes = Process.GetProcessesByName(targetProcessName);
-            foreach (var process in processes)
+            else
             {
-                try
+                DialogResult result = ShowMessage(
+                $"Different system date detected. Business Date was '{lastData}'",
+                "Transaction Restricted",
+                MessageBoxIcon.Warning
+            );
+
+                if (result == DialogResult.OK)
                 {
-                    process.Kill();
-                    process.WaitForExit(); // Ensure process is fully closed before continuing
-                }
-                catch (Exception ex)
-                {
-                    ShowMessage($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
-                                "Error", MessageBoxIcon.Error);
+                    CloseOtherAppIfRunning();
                 }
             }
         }
 
         private DialogResult ShowMessage(string text, string caption, MessageBoxIcon icon)
         {
-            if (InvokeRequired)
+            if (this.InvokeRequired)
             {
-                return (DialogResult)Invoke(new Func<DialogResult>(() =>
+                return (DialogResult)this.Invoke(new Func<DialogResult>(() =>
                     MessageBox.Show(this, text, caption, MessageBoxButtons.OK, icon)));
             }
             else
@@ -674,45 +632,78 @@ namespace RobinsonMallLinkingWBOX
         }
 
 
-        private void CheckTimeAndCloseApp(object sender, ElapsedEventArgs e)
+        //private void CheckTimeAndCloseApp(object sender, ElapsedEventArgs e)
+        //{
+        //    if (IsProcessRunning("notepad"))
+        //    {
+        //        RunScenarios("notepad");
+        //    }
+        //}
+        private void CheckTimeAndCloseApp(object sender, EventArgs e)
         {
-            DateTime now = DateTime.Now;
-            string targetProcessName = "wDesktop";
-            // Check if the time is between 4:00 AM and 9:00 AM
-            if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
+            Debug.WriteLine($"Timer ticked at {DateTime.Now}");
+
+            string[] targetProcesses = { "notepad", "CalculatorApp", "mspaint" };
+
+            foreach (var processName in targetProcesses)
             {
-                CloseOtherAppIfRunning(targetProcessName);
+                if (IsProcessRunning(processName))
+                {
+                    //Debug.WriteLine($"{processName} is running, calling RunScenarios.");
+                    this.Invoke((MethodInvoker)(() => RunScenarios(processName)));
+                }
             }
         }
-
-        private void CloseOtherAppIfRunning(string targetProcessName)
+        private bool IsProcessRunning(string processName)
         {
-            //targetProcessName = "wDesktop"; // Replace with the actual process name (without .exe)
+            return Process.GetProcessesByName(processName).Any();
+        }
 
-            var processes = Process.GetProcessesByName(targetProcessName);
-            if (processes.Any())
+        private void CloseOtherAppIfRunning()
+        {
+            string[] allProcessesToKill = { "notepad", "CalculatorApp", "mspaint" };
+
+            foreach (var procName in allProcessesToKill)
             {
-                foreach (var process in processes)
+                var processes = Process.GetProcessesByName(procName);
+                if (processes.Any())
                 {
-                    try
+                    foreach (var process in processes)
                     {
-                        process.Kill(); // Forcefully terminate the process
-                        process.WaitForExit(); // Wait for the process to exit
-                        MessageBox.Show($"The application '{targetProcessName}' was closed successfully.",
-                                        "Application Closed", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
-                                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        try
+                        {
+                            process.Kill();
+                            process.WaitForExit();
+                            MessageBox.Show($"The application '{procName}' was closed successfully.",
+                                            "Application Closed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Failed to close the application '{procName}'. Error: {ex.Message}",
+                                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                 }
             }
-            else
-            {
-                //MessageBox.Show($"No running instance of '{targetProcessName}' was found.", "Application Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
         }
+
+        //private void CloseApplication(string targetProcessName)
+        //{
+        //    var processes = Process.GetProcessesByName(targetProcessName);
+        //    foreach (var process in processes)
+        //    {
+        //        try
+        //        {
+        //            process.Kill();
+        //            process.WaitForExit(); // Ensure process is fully closed before continuing
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            ShowMessage($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
+        //                        "Error", MessageBoxIcon.Error);
+        //        }
+        //    }
+        //}
 
         private void ScenarioTimer_Tick(object sender, EventArgs e)
         {
