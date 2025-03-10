@@ -91,7 +91,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
                                 //_notifyIcon.ShowBalloonTip(3000, "Connection Established", "Connected", ToolTipIcon.Info);
                                 if (GlobalVar.SuccessSending2 == true)
                                 {
-                                    _notifyIcon.ShowBalloonTip(3000, "Connection Established", "Trying to send unsent files... Successfully", ToolTipIcon.Info);
+                                   // _notifyIcon.ShowBalloonTip(3000, "Connection Established", "Trying to send unsent files... Successfully", ToolTipIcon.Info);
                                 }
                             }
                             else
