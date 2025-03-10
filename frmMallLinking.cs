@@ -212,9 +212,9 @@ namespace RobinsonMallLinkingWBOX
         }
         private void AppCloseTimer_Tick(object sender, EventArgs e)
         {
-            if (IsProcessRunning("notepad"))
+            if (IsProcessRunning("wDesktop"))
             {
-                RunScenarios("notepad");
+                RunScenarios("wDesktop");
             }
         }
         private void CheckEODTrigger(object sender, ElapsedEventArgs e)
@@ -773,7 +773,7 @@ namespace RobinsonMallLinkingWBOX
         {
             Debug.WriteLine($"Timer ticked at {DateTime.Now}");
 
-            string[] targetProcesses = { "notepad", "CalculatorApp", "mspaint" };
+            string[] targetProcesses = { "wDesktop", "WirelessLink", "wBoxBridge" };
 
             foreach (var processName in targetProcesses)
             {
@@ -791,7 +791,7 @@ namespace RobinsonMallLinkingWBOX
 
         private void CloseOtherAppIfRunning()
         {
-            string[] allProcessesToKill = { "notepad", "CalculatorApp", "mspaint" };
+            string[] allProcessesToKill = { "wDesktop", "WirelessLink", "wBoxBridge" };
 
             foreach (var procName in allProcessesToKill)
             {
