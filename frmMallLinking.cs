@@ -212,9 +212,17 @@ namespace RobinsonMallLinkingWBOX
         }
         private void AppCloseTimer_Tick(object sender, EventArgs e)
         {
-            if (IsProcessRunning("wDesktop"))
+            if (IsProcessRunning("notepad"))
             {
-                RunScenarios("wDesktop");
+                try
+                {
+                    RunScenarios("notepad");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error in RunScenarios: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    // Optional: Stop the timer or log error if needed
+                }
             }
         }
         private void CheckEODTrigger(object sender, ElapsedEventArgs e)
@@ -515,118 +523,230 @@ namespace RobinsonMallLinkingWBOX
 
 
         #region App Closing Logic (During 4 AM to 9 AM)
-
-
         private void RunScenarios(string targetProcessName)
         {
-            if (isMessageBoxShown)
-                return;
+            if (isMessageBoxShown) return;
 
             string lastData;
             CheckSalesData(out lastData);
 
             DateTime now = DateTime.Now;
-            DateTime lastDataDate = DateTime.ParseExact(lastData, "MMddyyyy", CultureInfo.InvariantCulture);
+            DateTime lastDataDate;
+            bool isValidBusinessDate = DateTime.TryParseExact(lastData, "MMddyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out lastDataDate);
 
-            if (lastDataDate.Date != now.Date)
+            // Allow wDesktop to proceed silently if business date is invalid/missing
+            if (!isValidBusinessDate)
             {
-                if (now.TimeOfDay >= new TimeSpan(0, 0, 0) && now.TimeOfDay < new TimeSpan(3, 59, 0))
+                if (targetProcessName.Equals("wDesktop", StringComparison.OrdinalIgnoreCase))
                 {
+                    // Proceed silently for wDesktop
                     return;
-                }
-                else if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
-                {
-                    isMessageBoxShown = true;
-                    DialogResult result = ShowMessage(
-                        "Transactions are not allowed between 4:00 AM and 9:00 AM.",
-                        "Transaction Restricted",
-                        MessageBoxIcon.Warning);
-
-                    if (result == DialogResult.OK)
-                    {
-                        CloseOtherAppIfRunning();
-                        isMessageBoxShown = false; // Reset the flag after user responds
-                    }
-                }
-                else if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
-                {
-                    isMessageBoxShown = true;
-                    DialogResult result = ShowMessage(
-                        "No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.",
-                        "Missing EOD",
-                        MessageBoxIcon.Warning);
-
-                    if (result == DialogResult.OK)
-                    {
-                        CloseOtherAppIfRunning();
-                        isMessageBoxShown = false;
-                    }
                 }
                 else
                 {
-                    isMessageBoxShown = true;
-                    DialogResult result = ShowMessage(
-                        $"Different system date detected. Business Date was '{lastData}'",
-                        "Transaction Restricted",
-                        MessageBoxIcon.Warning);
-
-                    if (result == DialogResult.OK)
-                    {
-                        CloseOtherAppIfRunning();
-                        isMessageBoxShown = false;
-                    }
-                }
-            }
-            else if (lastDataDate.Date == now.Date)
-            {
-                if (now.TimeOfDay >= new TimeSpan(0, 0, 0) && now.TimeOfDay < new TimeSpan(3, 59, 0))
-                {
+                    // For other processes, still show message and allow normal flow
+                    ShowWarningAndClose($"Invalid or missing Business Date: '{lastData ?? "null"}'. Proceeding with system date.", "Date Parsing Warning");
                     return;
                 }
-                else if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
-                {
-                    isMessageBoxShown = true;
-                    DialogResult result = ShowMessage(
-                        "No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.",
-                        "Missing EOD",
-                        MessageBoxIcon.Warning);
+            }
 
-                    if (result == DialogResult.OK)
-                    {
-                        CloseOtherAppIfRunning();
-                        isMessageBoxShown = false;
-                    }
+            // Load EOD check data here (ensure EODYesterday1 gets value)
+            string dateYesterday = now.AddDays(-1).ToString("yyyy-MM-dd");
+            DataTable EODYesterday = eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", dateYesterday);
+            foreach (DataRow row in EODYesterday.Rows)
+            {
+                EODYesterday1 = int.Parse(row["COUNT(*)"].ToString());
+            }
+
+            bool isDifferentDate = lastDataDate.Date != now.Date;
+            bool isRestrictedTime = now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0);
+            bool isAllowedEarlyTime = now.TimeOfDay >= new TimeSpan(0, 0, 0) && now.TimeOfDay < new TimeSpan(3, 59, 0);
+            bool isEODMissing = EODYesterday1 == 0;
+
+            if (isAllowedEarlyTime)
+                return;
+
+            if (isDifferentDate)
+            {
+                if (isEODMissing)
+                {
+                    ShowWarningAndClose($"No EOD record found for yesterday. Please complete EOD for yesterday before proceeding. Last Business Date was '{lastData}'", "Missing EOD");
+                }
+                else if (isRestrictedTime)
+                {
+                    ShowWarningAndClose("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted");
                 }
                 else
                 {
-                    isMessageBoxShown = true;
-                    DialogResult result = ShowMessage(
-                        $"Different system date detected. Business Date was '{lastData}'",
-                        "Transaction Restricted",
-                        MessageBoxIcon.Warning);
-
-                    if (result == DialogResult.OK)
-                    {
-                        CloseOtherAppIfRunning();
-                        isMessageBoxShown = false;
-                    }
+                    ShowWarningAndClose($"Different system date detected. Business Date was '{lastData}'", "Transaction Restricted");
                 }
             }
-            else
+            else // lastData == today
             {
-                isMessageBoxShown = true;
-                DialogResult result = ShowMessage(
-                    $"Different system date detected. Business Date was '{lastData}'",
-                    "Transaction Restricted",
-                    MessageBoxIcon.Warning);
-
-                if (result == DialogResult.OK)
+                if (isRestrictedTime)
                 {
-                    CloseOtherAppIfRunning();
-                    isMessageBoxShown = false;
+                    ShowWarningAndClose("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted");
+                }
+                else if (isEODMissing)
+                {
+                    ShowWarningAndClose("No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.", "Missing EOD");
                 }
             }
         }
+
+        private void ShowWarningAndClose(string message, string title)
+        {
+            isMessageBoxShown = true;
+            DialogResult result = ShowMessage(message, title, MessageBoxIcon.Warning);
+
+            if (result == DialogResult.OK)
+            {
+                CloseOtherAppIfRunning();
+                isMessageBoxShown = false;
+            }
+        }
+
+        private DialogResult ShowMessage(string text, string caption, MessageBoxIcon icon)
+        {
+            if (this.InvokeRequired)
+            {
+                return (DialogResult)this.Invoke(new Func<DialogResult>(() =>
+                    MessageBox.Show(text, caption, MessageBoxButtons.OK, icon,
+                                    MessageBoxDefaultButton.Button1,
+                                    MessageBoxOptions.DefaultDesktopOnly)));
+            }
+            else
+            {
+                return MessageBox.Show(text, caption, MessageBoxButtons.OK, icon,
+                                       MessageBoxDefaultButton.Button1,
+                                       MessageBoxOptions.DefaultDesktopOnly);
+            }
+        }
+
+        //private void RunScenarios(string targetProcessName)
+        //{
+        //    if (isMessageBoxShown)
+        //        return;
+
+        //    string lastData;
+        //    CheckSalesData(out lastData);
+
+        //    DateTime now = DateTime.Now;
+        //    DateTime lastDataDate = DateTime.ParseExact(lastData, "MMddyyyy", CultureInfo.InvariantCulture);
+
+        //    if (lastDataDate.Date != now.Date)
+        //    {
+        //        if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
+        //        {
+        //            isMessageBoxShown = true;
+        //            DialogResult result = ShowMessage(
+        //                $"No EOD record found for yesterday. Please complete EOD for yesterday before proceeding. Last Business Date was '{lastData}'",
+        //                "Missing EOD",
+        //                MessageBoxIcon.Warning);
+
+        //            if (result == DialogResult.OK)
+        //            {
+        //                CloseOtherAppIfRunning();
+        //                isMessageBoxShown = false;
+        //            }
+        //        }
+        //        else if (now.TimeOfDay >= new TimeSpan(0, 0, 0) && now.TimeOfDay < new TimeSpan(3, 59, 0))
+        //        {
+        //            return;
+        //        }
+        //        else if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
+        //        {
+        //            isMessageBoxShown = true;
+        //            DialogResult result = ShowMessage(
+        //                "Transactions are not allowed between 4:00 AM and 9:00 AM.",
+        //                "Transaction Restricted",
+        //                MessageBoxIcon.Warning);
+
+        //            if (result == DialogResult.OK)
+        //            {
+        //                CloseOtherAppIfRunning();
+        //                isMessageBoxShown = false; // Reset the flag after user responds
+        //            }
+        //        }
+        //        else
+        //        {
+        //            isMessageBoxShown = true;
+        //            DialogResult result = ShowMessage(
+        //                $"Different system date detected. Business Date was '{lastData}'",
+        //                "Transaction Restricted",
+        //                MessageBoxIcon.Warning);
+
+        //            if (result == DialogResult.OK)
+        //            {
+        //                CloseOtherAppIfRunning();
+        //                isMessageBoxShown = false;
+        //            }
+        //        }
+        //    }
+        //    else if (lastDataDate.Date == now.Date)
+        //    {
+        //        if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
+        //        {
+        //            isMessageBoxShown = true;
+        //            DialogResult result = ShowMessage(
+        //                "Transactions are not allowed between 4:00 AM and 9:00 AM.",
+        //                "Transaction Restricted",
+        //                MessageBoxIcon.Warning);
+
+        //            if (result == DialogResult.OK)
+        //            {
+        //                CloseOtherAppIfRunning();
+        //                isMessageBoxShown = false; // Reset the flag after user responds
+        //            }
+        //        }
+        //        else if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
+        //        {
+        //            isMessageBoxShown = true;
+        //            DialogResult result = ShowMessage(
+        //                "No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.",
+        //                "Missing EOD",
+        //                MessageBoxIcon.Warning);
+
+        //            if (result == DialogResult.OK)
+        //            {
+        //                CloseOtherAppIfRunning();
+        //                isMessageBoxShown = false;
+        //            }
+        //        }
+        //        else if (now.TimeOfDay >= new TimeSpan(0, 0, 0) && now.TimeOfDay < new TimeSpan(3, 59, 0))
+        //        {
+        //            return;
+        //        }
+        //        else
+        //        {
+        //            isMessageBoxShown = true;
+        //            DialogResult result = ShowMessage(
+        //                $"Different system date detected. Business Date was '{lastData}'",
+        //                "Transaction Restricted",
+        //                MessageBoxIcon.Warning);
+
+        //            if (result == DialogResult.OK)
+        //            {
+        //                CloseOtherAppIfRunning();
+        //                isMessageBoxShown = false;
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        isMessageBoxShown = true;
+        //        DialogResult result = ShowMessage(
+        //            $"Different system date detected. Business Date was '{lastData}'",
+        //            "Transaction Restricted",
+        //            MessageBoxIcon.Warning);
+
+        //        if (result == DialogResult.OK)
+        //        {
+        //            CloseOtherAppIfRunning();
+        //            isMessageBoxShown = false;
+        //        }
+        //    }
+        //}
 
 
         //private void RunScenarios(string targetProcessName)
@@ -731,22 +851,7 @@ namespace RobinsonMallLinkingWBOX
         //        }
         //    }
         //}
-        private DialogResult ShowMessage(string text, string caption, MessageBoxIcon icon)
-        {
-            if (this.InvokeRequired)
-            {
-                return (DialogResult)this.Invoke(new Func<DialogResult>(() =>
-                    MessageBox.Show(text, caption, MessageBoxButtons.OK, icon,
-                                    MessageBoxDefaultButton.Button1,
-                                    MessageBoxOptions.DefaultDesktopOnly)));
-            }
-            else
-            {
-                return MessageBox.Show(text, caption, MessageBoxButtons.OK, icon,
-                                       MessageBoxDefaultButton.Button1,
-                                       MessageBoxOptions.DefaultDesktopOnly);
-            }
-        }
+
 
         //private DialogResult ShowMessage(string text, string caption, MessageBoxIcon icon)
         //{
@@ -773,7 +878,7 @@ namespace RobinsonMallLinkingWBOX
         {
             Debug.WriteLine($"Timer ticked at {DateTime.Now}");
 
-            string[] targetProcesses = { "wDesktop", "WirelessLink", "wBoxBridge" };
+            string[] targetProcesses = { "notepad", "WirelessLink", "wBoxBridge" };
 
             foreach (var processName in targetProcesses)
             {
@@ -791,7 +896,7 @@ namespace RobinsonMallLinkingWBOX
 
         private void CloseOtherAppIfRunning()
         {
-            string[] allProcessesToKill = { "wDesktop", "WirelessLink", "wBoxBridge" };
+            string[] allProcessesToKill = { "notepad", "WirelessLink", "wBoxBridge" };
 
             foreach (var procName in allProcessesToKill)
             {
@@ -1330,7 +1435,7 @@ namespace RobinsonMallLinkingWBOX
             lastData = string.Empty;
 
             DataTable ACCdate = transactionDataStorage.GetDataAccDate();
-
+             
             if (ACCdate != null && ACCdate.Rows.Count > 0)
             {
                 DataRow row = ACCdate.Rows[0]; // Get the first row
