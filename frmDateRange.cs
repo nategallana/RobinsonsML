@@ -148,7 +148,7 @@ namespace RobinsonMallLinkingWBOX
         }
         private void btnClose_Click(object sender, EventArgs e)
         {
-            Application.Exit();
+            this.Close();
         }
         private void btnGenerate_Click(object sender, EventArgs e)
         {
