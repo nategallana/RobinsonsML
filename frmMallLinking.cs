@@ -534,7 +534,7 @@ namespace RobinsonMallLinkingWBOX
             DateTime lastDataDate;
             bool isValidBusinessDate = DateTime.TryParseExact(lastData, "MMddyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out lastDataDate);
 
-            // Allow wDesktop to proceed silently if business date is invalid/missing
+            //Allow wDesktop to proceed silently if business date is invalid / missing
             if (!isValidBusinessDate)
             {
                 if (targetProcessName.Equals("wDesktop", StringComparison.OrdinalIgnoreCase))
@@ -869,14 +869,14 @@ namespace RobinsonMallLinkingWBOX
 
         //private void CheckTimeAndCloseApp(object sender, ElapsedEventArgs e)
         //{
-        //    if (IsProcessRunning("notepad"))
+        //    if (IsProcessRunning("wDesktop"))
         //    {
-        //        RunScenarios("notepad");
+        //        RunScenarios("wDesktop");
         //    }
         //}
         private void CheckTimeAndCloseApp(object sender, EventArgs e)
         {
-            Debug.WriteLine($"Timer ticked at {DateTime.Now}");
+            //Debug.WriteLine($"Timer ticked at {DateTime.Now}");
 
             string[] targetProcesses = { "notepad", "WirelessLink", "wBoxBridge" };
 

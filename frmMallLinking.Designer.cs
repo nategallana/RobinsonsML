@@ -100,10 +100,6 @@ namespace RobinsonMallLinkingWBOX
             this.notifyIcon1.Visible = true;
             this.notifyIcon1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon1_MouseDoubleClick);
             // 
-            // backgroundWorker1
-            // 
-            //this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
-            // 
             // ScenarioTimer
             // 
             this.ScenarioTimer.Tick += new System.EventHandler(this.ScenarioTimer_Tick);
@@ -112,11 +108,12 @@ namespace RobinsonMallLinkingWBOX
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(200, 74);
+            this.ClientSize = new System.Drawing.Size(178, 69);
+            this.ControlBox = false;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Name = "frmMallLinking";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
-            this.Text = "Form1";
             this.WindowState = System.Windows.Forms.FormWindowState.Minimized;
             this.Load += new System.EventHandler(this.Form1_Load);
             this.contextMenuStrip1.ResumeLayout(false);

@@ -48,7 +48,7 @@ namespace RobinsonMallLinkingWBOX
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Rockwell Condensed", 36F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(26, 27);
+            this.label1.Location = new System.Drawing.Point(29, 21);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(412, 56);
             this.label1.TabIndex = 1;
