@@ -115,6 +115,15 @@ namespace RobinsonMallLinkingWBOX
             InitializeEODHandler();
             InitializeAppCloseHandler();
             InitializeFolder();
+
+            FileSystemWatcher watcher = new FileSystemWatcher();
+            string filePath = xml;
+            watcher.Path = xml;
+            watcher.EnableRaisingEvents = true;
+            watcher.NotifyFilter = NotifyFilters.FileName;
+            watcher.Filter = "*.XML";
+            watcher.Created += new FileSystemEventHandler(OnChanged);
+            watcher.Deleted += new FileSystemEventHandler(OnChanged);
         }
         private void InitializeFolder()
         {
@@ -285,7 +294,36 @@ namespace RobinsonMallLinkingWBOX
             }
         }
         #endregion
-
+        #region Read DAta on API
+        private void readRequest(FileSystemEventArgs file)
+        {
+            string filename = Path.GetFileNameWithoutExtension(file.Name);
+            BackupXML(filename);
+        }
+        private void FillListWatch(FileSystemEventArgs e)
+        {
+            switch (e.ChangeType)
+            {
+                case WatcherChangeTypes.Created:
+                    // MessageBox.Show("Created!");
+                    readRequest(e);
+                    break;
+                case WatcherChangeTypes.Changed:
+                    MessageBox.Show("Changed!");
+                    break;
+                case WatcherChangeTypes.Renamed:
+                    MessageBox.Show("Renamed!");
+                    break;
+                case WatcherChangeTypes.Deleted:
+                    MessageBox.Show("Deleted!");
+                    break;
+            }
+        }
+        private void OnChanged(object sender, FileSystemEventArgs e)
+        {
+            FillListWatch(e);
+        }
+        #endregion
         #region buttons
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
