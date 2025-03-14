@@ -77,6 +77,7 @@ namespace RobinsonMallLinkingWBOX
 
         }
 
+
         public static string HOST { get => host; set => host = value.ToString(); }
         public static string USERNAME { get => uname; set => uname = value.ToString(); }
         public static string PASSWORD { get => pword; set => pword = value.ToString(); }

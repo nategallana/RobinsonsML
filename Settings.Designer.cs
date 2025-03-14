@@ -42,6 +42,8 @@ namespace RobinsonMallLinkingWBOX
             this.txtXML = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.txtSSHKey = new System.Windows.Forms.TextBox();
+            this.label9 = new System.Windows.Forms.Label();
             this.txtDrctry = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.txtPword = new System.Windows.Forms.TextBox();
@@ -52,8 +54,6 @@ namespace RobinsonMallLinkingWBOX
             this.label2 = new System.Windows.Forms.Label();
             this.btnSave = new System.Windows.Forms.Button();
             this.panel5 = new System.Windows.Forms.Panel();
-            this.label9 = new System.Windows.Forms.Label();
-            this.txtSSHKey = new System.Windows.Forms.TextBox();
             this.tabControl1.SuspendLayout();
             this.tabPage3.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -193,6 +193,24 @@ namespace RobinsonMallLinkingWBOX
             this.tabPage2.Text = "SFTP Setup";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
+            // txtSSHKey
+            // 
+            this.txtSSHKey.Font = new System.Drawing.Font("Century Gothic", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtSSHKey.Location = new System.Drawing.Point(124, 118);
+            this.txtSSHKey.Name = "txtSSHKey";
+            this.txtSSHKey.Size = new System.Drawing.Size(205, 23);
+            this.txtSSHKey.TabIndex = 9;
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Font = new System.Drawing.Font("Century Gothic", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label9.Location = new System.Drawing.Point(40, 121);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(59, 17);
+            this.label9.TabIndex = 8;
+            this.label9.Text = "SSH Key:";
+            // 
             // txtDrctry
             // 
             this.txtDrctry.Font = new System.Drawing.Font("Century Gothic", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -291,24 +309,6 @@ namespace RobinsonMallLinkingWBOX
             this.panel5.Name = "panel5";
             this.panel5.Size = new System.Drawing.Size(119, 40);
             this.panel5.TabIndex = 39;
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Font = new System.Drawing.Font("Century Gothic", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label9.Location = new System.Drawing.Point(40, 121);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(59, 17);
-            this.label9.TabIndex = 8;
-            this.label9.Text = "SSH Key:";
-            // 
-            // txtSSHKey
-            // 
-            this.txtSSHKey.Font = new System.Drawing.Font("Century Gothic", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtSSHKey.Location = new System.Drawing.Point(124, 118);
-            this.txtSSHKey.Name = "txtSSHKey";
-            this.txtSSHKey.Size = new System.Drawing.Size(205, 23);
-            this.txtSSHKey.TabIndex = 9;
             // 
             // Settings
             // 
