@@ -20,6 +20,7 @@ using System.Xml.Linq;
 using Tarsier.Extensions;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
+using RobinsonMallLinkingWBOX.ModelsRequest;
 
 namespace RobinsonMallLinkingWBOX
 {
@@ -95,6 +96,7 @@ namespace RobinsonMallLinkingWBOX
         private static NotifyIcon _notifyIcon;
 #pragma warning restore CS0169 // The field 'frmMallLinking._notifyIcon' is never used
         private bool isMessageBoxShown = false;
+        public ExternalTransactionRequest request = null;
         //private BackgroundWorker backgroundWorker;
 
         public frmMallLinking()
@@ -124,13 +126,13 @@ namespace RobinsonMallLinkingWBOX
                 string sent = Path.Combine(dir, sentFolder);
                 string unsent = Path.Combine(dir, unsentFolder);
 
-                if(!Directory.Exists(sent) || !Directory.Exists(unsent))
+                if (!Directory.Exists(sent) || !Directory.Exists(unsent))
                 {
                     Directory.CreateDirectory(sent);
                     Directory.CreateDirectory(unsent);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 ErrorLogger.LogError($"Error: {ex.Message}\n{ex.StackTrace}");
             }
@@ -162,7 +164,7 @@ namespace RobinsonMallLinkingWBOX
         }
 
         public void InitializeEODValues()
-        { 
+        {
             EODTENTID = String.Empty;
             EODTERMNO = String.Empty;
             EODGROSS = 0.00M;
@@ -327,7 +329,7 @@ namespace RobinsonMallLinkingWBOX
 
             //string startDate = sDate.ToString("MMddyyyy");
             //string endDate = eDate.ToString("MMddyyyy");
-             
+
             //convertFormatDate(startDate, endDate);
         }
         #endregion
@@ -342,7 +344,7 @@ namespace RobinsonMallLinkingWBOX
             {
                 if (orderElement != null)
                 {
-                
+
                     // Extract Order details
                     string version = orderElement.Attribute("version")?.Value;
                     string storeName = orderElement.Attribute("storename")?.Value;
@@ -520,7 +522,13 @@ namespace RobinsonMallLinkingWBOX
         }
         #endregion
 
-
+        #region Read API Data
+        private void ReadRequest(FileSystemEventArgs file)
+        {
+            string filename = Path.GetFileNameWithoutExtension(file.Name);
+            BackupXML(filename);
+        }
+        #endregion
 
         #region App Closing Logic (During 4 AM to 9 AM)
         private void RunScenarios(string targetProcessName)
