@@ -20,7 +20,7 @@ using System.Xml.Linq;
 using Tarsier.Extensions;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
-using RobinsonMallLinkingWBOX.ModelsRequest;
+//using RobinsonMallLinkingWBOX.ModelsRequest;
 
 namespace RobinsonMallLinkingWBOX
 {
@@ -96,7 +96,7 @@ namespace RobinsonMallLinkingWBOX
         private static NotifyIcon _notifyIcon;
 #pragma warning restore CS0169 // The field 'frmMallLinking._notifyIcon' is never used
         private bool isMessageBoxShown = false;
-        public ExternalTransactionRequest request = null;
+        //public ExternalTransactionRequest request = null;
         //private BackgroundWorker backgroundWorker;
 
         public frmMallLinking()
