@@ -120,15 +120,11 @@ namespace RobinsonMallLinkingWBOX
             InitializeFolder();
 
             watcher = new FileSystemWatcher();
-            watcher.Path = xml; // Or better: Path.GetDirectoryName(xml) if xml is a file
-            MessageBox.Show("Watcher path: " + watcher.Path); // ✔ Confirm the path being watched
+            watcher.Path = xml;
             watcher.EnableRaisingEvents = true;
             watcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite;
             watcher.Filter = "*.xml";
             watcher.Created += new FileSystemEventHandler(OnChanged);
-            watcher.Deleted += new FileSystemEventHandler(OnChanged);
-            watcher.Changed += new FileSystemEventHandler(OnChanged);
-            watcher.Renamed += new RenamedEventHandler(OnRenamed);
 
         }
         private void InitializeFolder()
@@ -229,11 +225,11 @@ namespace RobinsonMallLinkingWBOX
         }
         private void AppCloseTimer_Tick(object sender, EventArgs e)
         {
-            if (IsProcessRunning("notepad"))
+            if (IsProcessRunning("wDesktop"))
             {
                 try
                 {
-                    RunScenarios("notepad");
+                    RunScenarios("wDesktop");
                 }
                 catch (Exception ex)
                 {
@@ -274,7 +270,7 @@ namespace RobinsonMallLinkingWBOX
                 Directory.CreateDirectory(xmlFolderPath);
             }
 
-            string[] xmlFiles = Directory.GetFiles(xmlFolderPath, "*.xml");
+            string[] xmlFiles = Directory.GetFiles(xmlFolderPath, "*.XML");
 
             foreach (string xmlFile in xmlFiles)
             {
@@ -308,14 +304,14 @@ namespace RobinsonMallLinkingWBOX
             BackupXML(filename);
         }
 
-        private void FillListWatch(FileSystemEventArgs e)
+        private async void FillListWatch(FileSystemEventArgs e)
         {
             switch (e.ChangeType)
             {
                 case WatcherChangeTypes.Created:
-                    // Correctly pass the directory path to BackupXML
                     MessageBox.Show("Created!");
-                    BackupXML(Path.GetDirectoryName(e.FullPath));
+                    await Task.Delay(500); // short delay to allow full file write
+                    BackupXML(xml);
                     break;
 
                 case WatcherChangeTypes.Changed:
@@ -352,21 +348,55 @@ namespace RobinsonMallLinkingWBOX
         //            break;
         //    }
         //}
+        //private void OnChanged(object sender, FileSystemEventArgs e)
+        //{
+        //    try
+        //    {
+        //        MessageBox.Show($"[WATCHER] File: {e.Name}, Type: {e.ChangeType}");
+        //        FillListWatch(e);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show("Watcher Error: " + ex.Message);
+        //    }
+        //}
         private void OnChanged(object sender, FileSystemEventArgs e)
         {
-            try
-            {
-                MessageBox.Show($"[WATCHER] File: {e.Name}, Type: {e.ChangeType}");
-                FillListWatch(e);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Watcher Error: " + ex.Message);
-            }
+            // Process only the newly created file (not everything again)
+            ProcessNewXML(e.FullPath);
         }
+
         private void OnRenamed(object sender, RenamedEventArgs e)
         {
             FillListWatch(e);
+        }
+        private async void ProcessNewXML(string filePath)
+        {
+            try
+            {
+                // Wait a little to ensure file is fully written
+                await Task.Delay(500);
+
+                if (Path.GetExtension(filePath).ToLower() != ".xml") return;
+
+                if (File.Exists(filePath))
+                {
+                    string xmlContent = File.ReadAllText(filePath);
+                    SalesPerTransaction(xmlContent);
+
+                    // Move to ProcessedFiles folder
+                    string processedFolderPath = Path.Combine(xml, "ProcessedFiles");
+                    if (!Directory.Exists(processedFolderPath))
+                        Directory.CreateDirectory(processedFolderPath);
+
+                    string destinationPath = Path.Combine(processedFolderPath, Path.GetFileName(filePath));
+                    File.Move(filePath, destinationPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error in ProcessNewXML: {ex.Message}\n{ex.StackTrace}");
+            }
         }
 
         #endregion
@@ -718,7 +748,7 @@ namespace RobinsonMallLinkingWBOX
         {
             //Debug.WriteLine($"Timer ticked at {DateTime.Now}");
 
-            string[] targetProcesses = { "notepad", "WirelessLink", "wBoxBridge" };
+            string[] targetProcesses = { "wDesktop", "WirelessLink", "wBoxBridge" };
 
             foreach (var processName in targetProcesses)
             {
@@ -736,7 +766,7 @@ namespace RobinsonMallLinkingWBOX
 
         private void CloseOtherAppIfRunning()
         {
-            string[] allProcessesToKill = { "notepad", "WirelessLink", "wBoxBridge" };
+            string[] allProcessesToKill = { "wDesktop", "WirelessLink", "wBoxBridge" };
 
             foreach (var procName in allProcessesToKill)
             {
