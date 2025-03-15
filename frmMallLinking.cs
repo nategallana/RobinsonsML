@@ -98,6 +98,9 @@ namespace RobinsonMallLinkingWBOX
         private bool isMessageBoxShown = false;
         public ExternalTransactionRequest request = null;
         //private BackgroundWorker backgroundWorker;
+        FileSystemWatcher watcher;
+
+
 
         public frmMallLinking()
         {
@@ -116,14 +119,17 @@ namespace RobinsonMallLinkingWBOX
             InitializeAppCloseHandler();
             InitializeFolder();
 
-            FileSystemWatcher watcher = new FileSystemWatcher();
-            string filePath = xml;
-            watcher.Path = xml;
+            watcher = new FileSystemWatcher();
+            watcher.Path = xml; // Or better: Path.GetDirectoryName(xml) if xml is a file
+            MessageBox.Show("Watcher path: " + watcher.Path); // ✔ Confirm the path being watched
             watcher.EnableRaisingEvents = true;
-            watcher.NotifyFilter = NotifyFilters.FileName;
-            watcher.Filter = "*.XML";
+            watcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite;
+            watcher.Filter = "*.xml";
             watcher.Created += new FileSystemEventHandler(OnChanged);
             watcher.Deleted += new FileSystemEventHandler(OnChanged);
+            watcher.Changed += new FileSystemEventHandler(OnChanged);
+            watcher.Renamed += new RenamedEventHandler(OnRenamed);
+
         }
         private void InitializeFolder()
         {
@@ -293,6 +299,7 @@ namespace RobinsonMallLinkingWBOX
                 }
             }
         }
+
         #endregion
         #region Read DAta on API
         private void readRequest(FileSystemEventArgs file)
@@ -300,29 +307,68 @@ namespace RobinsonMallLinkingWBOX
             string filename = Path.GetFileNameWithoutExtension(file.Name);
             BackupXML(filename);
         }
+
         private void FillListWatch(FileSystemEventArgs e)
         {
             switch (e.ChangeType)
             {
                 case WatcherChangeTypes.Created:
-                    // MessageBox.Show("Created!");
-                    readRequest(e);
+                    // Correctly pass the directory path to BackupXML
+                    MessageBox.Show("Created!");
+                    BackupXML(Path.GetDirectoryName(e.FullPath));
                     break;
+
                 case WatcherChangeTypes.Changed:
+                    // Optional: handle if you want to reprocess updated files
                     MessageBox.Show("Changed!");
                     break;
+
                 case WatcherChangeTypes.Renamed:
                     MessageBox.Show("Renamed!");
                     break;
+
                 case WatcherChangeTypes.Deleted:
                     MessageBox.Show("Deleted!");
                     break;
             }
         }
+
+        //private void FillListWatch(FileSystemEventArgs e)
+        //{
+        //    switch (e.ChangeType)
+        //    {
+        //        case WatcherChangeTypes.Created:
+        //            // MessageBox.Show("Created!");
+        //            readRequest(e);
+        //            break;
+        //        case WatcherChangeTypes.Changed:
+        //            MessageBox.Show("Changed!");
+        //            break;
+        //        case WatcherChangeTypes.Renamed:
+        //            MessageBox.Show("Renamed!");
+        //            break;
+        //        case WatcherChangeTypes.Deleted:
+        //            MessageBox.Show("Deleted!");
+        //            break;
+        //    }
+        //}
         private void OnChanged(object sender, FileSystemEventArgs e)
+        {
+            try
+            {
+                MessageBox.Show($"[WATCHER] File: {e.Name}, Type: {e.ChangeType}");
+                FillListWatch(e);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Watcher Error: " + ex.Message);
+            }
+        }
+        private void OnRenamed(object sender, RenamedEventArgs e)
         {
             FillListWatch(e);
         }
+
         #endregion
         #region buttons
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -597,7 +643,7 @@ namespace RobinsonMallLinkingWBOX
             }
 
             // Load EOD check data here (ensure EODYesterday1 gets value)
-            string dateYesterday = now.AddDays(-1).ToString("yyyy-MM-dd");
+            string dateYesterday = now.AddDays(-1).ToString("MMddyyyy");
             DataTable EODYesterday = eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", dateYesterday);
             foreach (DataRow row in EODYesterday.Rows)
             {
@@ -622,10 +668,10 @@ namespace RobinsonMallLinkingWBOX
                 {
                     ShowWarningAndClose("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted");
                 }
-                else
-                {
-                    ShowWarningAndClose($"Different system date detected. Business Date was '{lastData}'", "Transaction Restricted");
-                }
+                //else
+                //{
+                //    ShowWarningAndClose($"Different system date detected. Business Date was '{lastData}'", "Transaction Restricted");
+                //}
             }
             else // lastData == today
             {
@@ -668,258 +714,6 @@ namespace RobinsonMallLinkingWBOX
                                        MessageBoxOptions.DefaultDesktopOnly);
             }
         }
-
-        //private void RunScenarios(string targetProcessName)
-        //{
-        //    if (isMessageBoxShown)
-        //        return;
-
-        //    string lastData;
-        //    CheckSalesData(out lastData);
-
-        //    DateTime now = DateTime.Now;
-        //    DateTime lastDataDate = DateTime.ParseExact(lastData, "MMddyyyy", CultureInfo.InvariantCulture);
-
-        //    if (lastDataDate.Date != now.Date)
-        //    {
-        //        if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
-        //        {
-        //            isMessageBoxShown = true;
-        //            DialogResult result = ShowMessage(
-        //                $"No EOD record found for yesterday. Please complete EOD for yesterday before proceeding. Last Business Date was '{lastData}'",
-        //                "Missing EOD",
-        //                MessageBoxIcon.Warning);
-
-        //            if (result == DialogResult.OK)
-        //            {
-        //                CloseOtherAppIfRunning();
-        //                isMessageBoxShown = false;
-        //            }
-        //        }
-        //        else if (now.TimeOfDay >= new TimeSpan(0, 0, 0) && now.TimeOfDay < new TimeSpan(3, 59, 0))
-        //        {
-        //            return;
-        //        }
-        //        else if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
-        //        {
-        //            isMessageBoxShown = true;
-        //            DialogResult result = ShowMessage(
-        //                "Transactions are not allowed between 4:00 AM and 9:00 AM.",
-        //                "Transaction Restricted",
-        //                MessageBoxIcon.Warning);
-
-        //            if (result == DialogResult.OK)
-        //            {
-        //                CloseOtherAppIfRunning();
-        //                isMessageBoxShown = false; // Reset the flag after user responds
-        //            }
-        //        }
-        //        else
-        //        {
-        //            isMessageBoxShown = true;
-        //            DialogResult result = ShowMessage(
-        //                $"Different system date detected. Business Date was '{lastData}'",
-        //                "Transaction Restricted",
-        //                MessageBoxIcon.Warning);
-
-        //            if (result == DialogResult.OK)
-        //            {
-        //                CloseOtherAppIfRunning();
-        //                isMessageBoxShown = false;
-        //            }
-        //        }
-        //    }
-        //    else if (lastDataDate.Date == now.Date)
-        //    {
-        //        if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
-        //        {
-        //            isMessageBoxShown = true;
-        //            DialogResult result = ShowMessage(
-        //                "Transactions are not allowed between 4:00 AM and 9:00 AM.",
-        //                "Transaction Restricted",
-        //                MessageBoxIcon.Warning);
-
-        //            if (result == DialogResult.OK)
-        //            {
-        //                CloseOtherAppIfRunning();
-        //                isMessageBoxShown = false; // Reset the flag after user responds
-        //            }
-        //        }
-        //        else if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
-        //        {
-        //            isMessageBoxShown = true;
-        //            DialogResult result = ShowMessage(
-        //                "No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.",
-        //                "Missing EOD",
-        //                MessageBoxIcon.Warning);
-
-        //            if (result == DialogResult.OK)
-        //            {
-        //                CloseOtherAppIfRunning();
-        //                isMessageBoxShown = false;
-        //            }
-        //        }
-        //        else if (now.TimeOfDay >= new TimeSpan(0, 0, 0) && now.TimeOfDay < new TimeSpan(3, 59, 0))
-        //        {
-        //            return;
-        //        }
-        //        else
-        //        {
-        //            isMessageBoxShown = true;
-        //            DialogResult result = ShowMessage(
-        //                $"Different system date detected. Business Date was '{lastData}'",
-        //                "Transaction Restricted",
-        //                MessageBoxIcon.Warning);
-
-        //            if (result == DialogResult.OK)
-        //            {
-        //                CloseOtherAppIfRunning();
-        //                isMessageBoxShown = false;
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        isMessageBoxShown = true;
-        //        DialogResult result = ShowMessage(
-        //            $"Different system date detected. Business Date was '{lastData}'",
-        //            "Transaction Restricted",
-        //            MessageBoxIcon.Warning);
-
-        //        if (result == DialogResult.OK)
-        //        {
-        //            CloseOtherAppIfRunning();
-        //            isMessageBoxShown = false;
-        //        }
-        //    }
-        //}
-
-
-        //private void RunScenarios(string targetProcessName)
-        //{
-        //    string lastData;
-        //    CheckSalesData(out lastData);
-
-        //    DateTime now = DateTime.Now;
-        //    DateTime lastDataDate = DateTime.ParseExact(lastData, "MMddyyyy", CultureInfo.InvariantCulture);
-
-
-        //    if (lastDataDate.Date != now.Date) // Ensure lastData is compared as DateTime
-        //    {
-        //        if (now.TimeOfDay >= new TimeSpan(0, 0, 0) && now.TimeOfDay < new TimeSpan(3, 59, 0))
-        //        {
-        //            return; // Allow transactions before 4:00 AM
-        //        }
-        //        else if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
-        //        {
-        //            DialogResult result = ShowMessage(
-        //                "Transactions are not allowed between 4:00 AM and 9:00 AM.",
-        //                "Transaction Restricted",
-        //                MessageBoxIcon.Warning
-        //            );
-
-        //            if (result == DialogResult.OK)
-        //            {
-        //                CloseOtherAppIfRunning();
-        //            }
-        //        }
-        //        else if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
-        //        {
-        //            DialogResult result = ShowMessage(
-        //                "No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.",
-        //                "Missing EOD",
-        //                MessageBoxIcon.Warning
-        //            );
-
-        //            if (result == DialogResult.OK)
-        //            {
-        //                CloseOtherAppIfRunning();
-        //            }
-        //        }
-        //        else
-        //        {
-        //            DialogResult result = ShowMessage(
-        //            $"Different system date detected. Business Date was '{lastData}'",
-        //            "Transaction Restricted",
-        //            MessageBoxIcon.Warning
-        //        );
-
-        //            if (result == DialogResult.OK)
-        //            {
-        //                CloseOtherAppIfRunning();
-        //            }
-        //        }
-        //    }
-        //    else if (lastDataDate.Date == now.Date)
-        //    {
-        //        if (now.TimeOfDay >= new TimeSpan(0, 0, 0) && now.TimeOfDay < new TimeSpan(3, 59, 0))
-        //        {
-        //            return; // Allow transactions before 4:00 AM
-        //        }
-        //        else if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
-        //        {
-        //            DialogResult result = ShowMessage(
-        //                "No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.",
-        //                "Missing EOD",
-        //                MessageBoxIcon.Warning
-        //            );
-
-        //            if (result == DialogResult.OK)
-        //            {
-        //                CloseOtherAppIfRunning();
-        //            }
-        //        }
-        //        else
-        //        {
-        //            DialogResult result = ShowMessage(
-        //            $"Different system date detected. Business Date was '{lastData}'",
-        //            "Transaction Restricted",
-        //            MessageBoxIcon.Warning
-        //        );
-
-        //            if (result == DialogResult.OK)
-        //            {
-        //                CloseOtherAppIfRunning();
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        DialogResult result = ShowMessage(
-        //        $"Different system date detected. Business Date was '{lastData}'",
-        //        "Transaction Restricted",
-        //        MessageBoxIcon.Warning
-        //    );
-
-        //        if (result == DialogResult.OK)
-        //        {
-        //            CloseOtherAppIfRunning();
-        //        }
-        //    }
-        //}
-
-
-        //private DialogResult ShowMessage(string text, string caption, MessageBoxIcon icon)
-        //{
-        //    if (this.InvokeRequired)
-        //    {
-        //        return (DialogResult)this.Invoke(new Func<DialogResult>(() =>
-        //            MessageBox.Show(this, text, caption, MessageBoxButtons.OK, icon)));
-        //    }
-        //    else
-        //    {
-        //        return MessageBox.Show(this, text, caption, MessageBoxButtons.OK, icon);
-        //    }
-        //}
-
-
-        //private void CheckTimeAndCloseApp(object sender, ElapsedEventArgs e)
-        //{
-        //    if (IsProcessRunning("wDesktop"))
-        //    {
-        //        RunScenarios("wDesktop");
-        //    }
-        //}
         private void CheckTimeAndCloseApp(object sender, EventArgs e)
         {
             //Debug.WriteLine($"Timer ticked at {DateTime.Now}");
@@ -967,24 +761,6 @@ namespace RobinsonMallLinkingWBOX
                 }
             }
         }
-
-        //private void CloseApplication(string targetProcessName)
-        //{
-        //    var processes = Process.GetProcessesByName(targetProcessName);
-        //    foreach (var process in processes)
-        //    {
-        //        try
-        //        {
-        //            process.Kill();
-        //            process.WaitForExit(); // Ensure process is fully closed before continuing
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            ShowMessage($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
-        //                        "Error", MessageBoxIcon.Error);
-        //        }
-        //    }
-        //}
 
         private void ScenarioTimer_Tick(object sender, EventArgs e)
         {
@@ -1460,22 +1236,6 @@ namespace RobinsonMallLinkingWBOX
             }
         }
 
-
-        //public void CheckSalesData(out DateTime lastData)
-        //{
-        //    lastData = DateTime.MinValue;
-
-        //    DataTable ACCdate = transactionDataStorage.GetDataAccDate();
-
-        //    if (ACCdate != null && ACCdate.Rows.Count > 0)
-        //    {
-        //        DataRow row = ACCdate.Rows[0]; // Get the first row
-        //        string lastDateTimeRaw = row["TranscDate"].ToString(); // Assuming it's stored as yyyyMMddHHmmss
-
-        //        // Parse the combined date and time
-        //        lastData = DateTime.ParseExact(lastDateTimeRaw, "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
-        //    }
-        //}
         public void CheckSalesData(out string lastData)
         {
             lastData = string.Empty;
@@ -1490,78 +1250,6 @@ namespace RobinsonMallLinkingWBOX
                 lastData = parsedDate.ToString("MMddyyyy");
             }
         }
-
-        //public void Scenarios()
-        //{
-        //    DateTime now = DateTime.Now;
-
-        //    if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
-        //    {
-        //        MessageBox.Show("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-
-        //        // Close the different application (e.g., "OtherApp")
-        //        string targetProcessName = "wDesktop"; // Replace with the actual process name without ".exe"
-
-        //        var processes = Process.GetProcessesByName(targetProcessName);
-        //        if (processes.Any())
-        //        {
-        //            foreach (var process in processes)
-        //            {
-        //                try
-        //                {
-        //                    process.Kill();
-        //                    process.WaitForExit();
-        //                    MessageBox.Show($"Not allowed to transact at this time.", "Application Closed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-        //                }
-        //                catch (Exception ex)
-        //                {
-        //                    MessageBox.Show($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
-        //                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //                }
-        //            }
-        //        }
-        //        else
-        //        {
-        //            MessageBox.Show($"No running instance of '{targetProcessName}' was found.",
-        //                            "Application Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        //        }
-        //        return;
-        //    }
-
-        //    else if (EODYesterday1 == 0 && (perTransYestday1 != 0 || perTransYestday1 == 0))
-        //    {
-        //        MessageBox.Show("No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.", "Missing EOD", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-
-        //        // Close the different application (e.g., "OtherApp")
-        //        string targetProcessName = "wDesktop"; // Replace with the actual process name without ".exe"
-
-        //        var processes = Process.GetProcessesByName(targetProcessName);
-        //        if (processes.Any())
-        //        {
-        //            foreach (var process in processes)
-        //            {
-        //                try
-        //                {
-        //                    process.Kill();
-        //                    process.WaitForExit();
-        //                    MessageBox.Show($"Not allowed to transact at this time.", "Application Closed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-        //                }
-        //                catch (Exception ex)
-        //                {
-        //                    MessageBox.Show($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
-        //                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //                }
-        //            }
-        //        }
-        //        else
-        //        {
-        //            MessageBox.Show($"No running instance of '{targetProcessName}' was found.",
-        //                            "Application Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        //        }
-        //        return;
-        //    }
-        //}
-
 
         public void convertFormatDate(string startDate, string endDate) 
         {

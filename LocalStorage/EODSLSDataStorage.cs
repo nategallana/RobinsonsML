@@ -19,25 +19,20 @@ namespace RobinsonMallLinkingWBOX.LocalStorage
             return GetDataTable(query);
         }
 
-        public DataTable SelectEOD(string table, string column, string date)
+        public DataTable SelectEOD(string tableName, string columnName, string dateValue)
         {
-            //Error when running -- Index (zero based) must be greater than or equal to zero and less than the size of the argument list.
-            //string query = string.Format(Queries.SELECT_COUNT_WHERE);
-            //return GetDataTable(query);
-
             string query;
 
-            if (string.IsNullOrEmpty(date))
+            if (string.IsNullOrEmpty(dateValue))
             {
-                query = string.Format("SELECT COUNT(*) FROM {0} WHERE {1} IS NOT NULL", table, column);
+                query = string.Format("SELECT COUNT(*) FROM {0} WHERE {1} IS NOT NULL", tableName, columnName);
             }
             else
             {
-                query = string.Format(Queries.SELECT_COUNT_WHERE, table, column, date);
+                query = string.Format(Queries.SELECT_COUNT_WHERE, tableName, columnName, dateValue);
             }
 
             return GetDataTable(query);
-
         }
 
         public DataTable SelectPERTRANS(string table, string column, string date)
