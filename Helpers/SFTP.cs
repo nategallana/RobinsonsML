@@ -254,6 +254,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
             GlobalVar.ErrorSending = true;
             GlobalVar.SuccessSending = false;
             GlobalVar.SuccessSending2 = false;
+            GlobalVar.batchcount = 0;
         }
         public static bool CheckSftpConnection()
         {
