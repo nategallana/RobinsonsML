@@ -1116,7 +1116,7 @@ namespace RobinsonMallLinkingWBOX
         public void checkEODpreviousDates()
         {
             DialogResult result = MessageBox.Show(
-                "Previous day's EOD was not performed. Do you want to proceed?",
+                "Do you want to perform End of Day?",
                 "EOD Check",
                 MessageBoxButtons.OKCancel,
                 MessageBoxIcon.Information
@@ -1217,7 +1217,7 @@ namespace RobinsonMallLinkingWBOX
                     // Scenario 5: Fallback case - generate EOD using yesterday's date
                     else
                     {
-                        convertFormatDate(YESTERDAY_MMDDYYYY, LAST_DATE_MMDDYYYY);
+                        convertFormatDate(LAST_DATE_MMDDYYYY, LAST_DATE_MMDDYYYY);
                     }
 
                     #endregion
