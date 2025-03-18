@@ -44,7 +44,7 @@ namespace RobinsonMallLinkingWBOX
         //private System.Windows.Forms.Timer scenarioTimer;
         private System.Windows.Forms.Timer workerTimer;
 
-
+        private static DateTime? lastEODRunDate = null;
         private System.Timers.Timer eodTimer;
         private System.Windows.Forms.Timer appCloseTimer;
         private bool isEODTriggered = false;
@@ -629,7 +629,7 @@ namespace RobinsonMallLinkingWBOX
             {
                 if (targetProcessName.Equals("notepad", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Proceed silently for wDesktop
+                    // Proceed silently for notepad
                     return;
                 }
                 else
@@ -642,16 +642,19 @@ namespace RobinsonMallLinkingWBOX
 
             // Load EOD check data here (ensure EODYesterday1 gets value)
             string dateYesterday = now.AddDays(-1).ToString("MMddyyyy");
-            DataTable EODYesterday = eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", dateYesterday);
+            string dateYesterday1 = now.AddDays(-1).ToString("yyyyMMdd");
+            DataTable EODYesterday = eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", dateYesterday1);
             foreach (DataRow row in EODYesterday.Rows)
             {
                 EODYesterday1 = int.Parse(row["COUNT(*)"].ToString());
             }
 
             bool isDifferentDate = lastDataDate.Date != now.Date;
-            bool isRestrictedTime = now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0);
+            bool isRestrictedTime = now.TimeOfDay > new TimeSpan(4, 1, 0) && now.TimeOfDay < new TimeSpan(8, 59, 0);
             bool isAllowedEarlyTime = now.TimeOfDay >= new TimeSpan(0, 0, 0) && now.TimeOfDay < new TimeSpan(3, 59, 0);
-            bool isEODMissing = EODYesterday1 == 0;
+            bool isAutomatedEOD = now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay <= new TimeSpan(4, 1, 0) && EODYesterday1 == 0;
+            bool isEODMissing = now.TimeOfDay >= new TimeSpan(9, 0, 0) && EODYesterday1 == 0;
+            bool hasRunToday = lastEODRunDate?.Date == now.Date;
 
             if (isAllowedEarlyTime)
                 return;
@@ -661,6 +664,12 @@ namespace RobinsonMallLinkingWBOX
                 if (isEODMissing)
                 {
                     ShowWarningAndClose($"No EOD record found for yesterday. Please complete EOD for yesterday before proceeding. Last Business Date was '{lastData}'", "Missing EOD");
+                }
+                else if (isAutomatedEOD && !hasRunToday)
+                {
+                    checkEODpreviousDates();
+                    ShowWarningAndClose("Automatic End of Day has been processed.", "End of Day");
+                    lastEODRunDate = now;
                 }
                 else if (isRestrictedTime)
                 {
