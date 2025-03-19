@@ -1,32 +1,44 @@
-# Build output
-bin/
-obj/
-
-# Ignore common cache files
-*.cache
-*.dll
-*.pdb
-*.exe
-
-# VS-specific files and folders
+# ========================
+# Visual Studio Ignore
+# ========================
 .vs/
+.vs/slnx.sqlite
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
 
-# Other temporary files
+# ========================
+# Build Output
+# ========================
+bin/
+obj/
+
+# ========================
+# Common Cache / Temp Files
+# ========================
+*.cache
+*.pdb
+*.dll
+*.exe
 *.log
 *.tlog
 *.tmp
 
-# Rider / VS Code / other IDEs (optional)
-.idea/
-.vscode/
+# ========================
+# SQLite / Local DBs
+# ========================
+*.db
+*.sqlite
 
-# Specific cache files (if you want to keep them explicit)
+# ========================
+# Specific Cache Files (Optional - Extra Safety)
+# ========================
 obj/Debug/*.csproj.*.cache
 obj/Debug/Interop.InteropExtensionLib.dll
 
-# Ignore SQLite used by Visual Studio solution
-.vs/slnx.sqlite
+# ========================
+# IDEs - Rider / VS Code (Optional)
+# ========================
+.idea/
+.vscode/
