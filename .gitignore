@@ -1,6 +1,44 @@
-obj/Debug/RobinsonMallLinkingWBOX.csproj.ResolveComReference.cache
+# ========================
+# Visual Studio Ignore
+# ========================
+.vs/
+.vs/slnx.sqlite
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ========================
+# Build Output
+# ========================
+bin/
+obj/
+
+# ========================
+# Common Cache / Temp Files
+# ========================
+*.cache
+*.pdb
 *.dll
-*.cache
-*.cache
-obj/Debug/RobinsonMallLinkingWBOX.csproj.AssemblyReference.cache
+*.exe
+*.log
+*.tlog
+*.tmp
+
+# ========================
+# SQLite / Local DBs
+# ========================
+*.db
+*.sqlite
+
+# ========================
+# Specific Cache Files (Optional - Extra Safety)
+# ========================
+obj/Debug/*.csproj.*.cache
 obj/Debug/Interop.InteropExtensionLib.dll
+
+# ========================
+# IDEs - Rider / VS Code (Optional)
+# ========================
+.idea/
+.vscode/

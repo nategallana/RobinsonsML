@@ -43,12 +43,12 @@ namespace RobinsonMallLinkingWBOX
         public string xml, host, username, password, dir, tenantname, terminal = null;
         //private System.Windows.Forms.Timer scenarioTimer;
         private System.Windows.Forms.Timer workerTimer;
-
-        private static DateTime? lastEODRunDate = null;
         private System.Timers.Timer eodTimer;
         private System.Windows.Forms.Timer appCloseTimer;
         private bool isEODTriggered = false;
         private readonly object eodLock = new object();
+        private bool isAutoEODRunning = false;
+        DateTime lastAutoEODRun = DateTime.MinValue; // Put this as a class-level field
 
         public int TotalRecords, EODToday1, EODYesterday1, perTrans1, perTransYestday1;
         #endregion
@@ -613,9 +613,10 @@ namespace RobinsonMallLinkingWBOX
         #endregion
 
         #region App Closing Logic (During 4 AM to 9 AM)
+
         private void RunScenarios(string targetProcessName)
         {
-            if (isMessageBoxShown) return;
+            if (isMessageBoxShown || isAutoEODRunning) return;
 
             string lastData;
             CheckSalesData(out lastData);
@@ -624,74 +625,141 @@ namespace RobinsonMallLinkingWBOX
             DateTime lastDataDate;
             bool isValidBusinessDate = DateTime.TryParseExact(lastData, "MMddyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out lastDataDate);
 
-            //Allow notepad to proceed silently if business date is invalid / missing
             if (!isValidBusinessDate)
             {
                 if (targetProcessName.Equals("notepad", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Proceed silently for notepad
                     return;
-                }
-                else
-                {
-                    // For other processes, still show message and allow normal flow
-                    ShowWarningAndClose($"Invalid or missing Business Date: '{lastData ?? "null"}'. Proceeding with system date.", "Date Parsing Warning");
-                    return;
-                }
+
+                ShowWarningAndClose($"Invalid or missing Business Date: '{lastData ?? "null"}'. Proceeding with system date.", "Date Parsing Warning");
+                return;
             }
 
-            // Load EOD check data here (ensure EODYesterday1 gets value)
-            string dateYesterday = now.AddDays(-1).ToString("MMddyyyy");
-            string dateYesterday1 = now.AddDays(-1).ToString("yyyyMMdd");
-            DataTable EODYesterday = eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", dateYesterday1);
+            string dateYesterday = now.AddDays(-1).ToString("yyyyMMdd");
+            DataTable EODYesterday = eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", dateYesterday);
             foreach (DataRow row in EODYesterday.Rows)
             {
                 EODYesterday1 = int.Parse(row["COUNT(*)"].ToString());
             }
 
+            bool isAllowedEarlyTime = now.TimeOfDay < new TimeSpan(4, 0, 0); // Before 4 AM
+            bool isTimeToAutoEOD = now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(4, 1, 0); // Between 4:00:00 and 4:00:59
+            bool isRestrictedTime = now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0);
             bool isDifferentDate = lastDataDate.Date != now.Date;
-            bool isRestrictedTime = now.TimeOfDay > new TimeSpan(4, 1, 0) && now.TimeOfDay < new TimeSpan(8, 59, 0);
-            bool isAllowedEarlyTime = now.TimeOfDay >= new TimeSpan(0, 0, 0) && now.TimeOfDay < new TimeSpan(3, 59, 0);
-            bool isAutomatedEOD = now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay <= new TimeSpan(4, 1, 0) && EODYesterday1 == 0;
-            bool isEODMissing = now.TimeOfDay >= new TimeSpan(9, 0, 0) && EODYesterday1 == 0;
-            bool hasRunToday = lastEODRunDate?.Date == now.Date;
+            bool isEODMissing = EODYesterday1 == 0;
 
+            // Allow execution before 4 AM freely
             if (isAllowedEarlyTime)
+            {
                 return;
-
-            if (isDifferentDate)
-            {
-                if (isEODMissing)
-                {
-                    ShowWarningAndClose($"No EOD record found for yesterday. Please complete EOD for yesterday before proceeding. Last Business Date was '{lastData}'", "Missing EOD");
-                }
-                else if (isAutomatedEOD && !hasRunToday)
-                {
-                    checkEODpreviousDates();
-                    ShowWarningAndClose("Automatic End of Day has been processed.", "End of Day");
-                    lastEODRunDate = now;
-                }
-                else if (isRestrictedTime)
-                {
-                    ShowWarningAndClose("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted");
-                }
-                //else
-                //{
-                //    ShowWarningAndClose($"Different system date detected. Business Date was '{lastData}'", "Transaction Restricted");
-                //}
             }
-            else // lastData == today
+            // Auto-EOD block (only once per day)
+            else if (isTimeToAutoEOD && isEODMissing && lastAutoEODRun.Date != now.Date)
             {
-                if (isRestrictedTime)
-                {
-                    ShowWarningAndClose("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted");
-                }
-                //else if (isEODMissing)
-                //{
-                //    ShowWarningAndClose("No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.", "Missing EOD");
-                //}
+                isAutoEODRunning = true;
+                appCloseTimer.Stop();
+
+                lastAutoEODRun = now;
+                checkEODpreviousDates();
+
+                isAutoEODRunning = false;
+                appCloseTimer.Start();
+
+                ShowWarningAndClose("Automatic End of Day has been processed.", "End of Day");
+                return;
+            }
+            // Missing EOD warning — after 9 AM only
+            else if (now.TimeOfDay >= new TimeSpan(9, 0, 0) && isDifferentDate && isEODMissing)
+            {
+                ShowWarningAndClose($"No EOD record found for yesterday. Please complete EOD for yesterday before proceeding. Last Business Date was '{lastData}'", "Missing EOD");
+                return;
+            }
+            // Restricted time (only after AutoEOD has completed, not during it)
+            else if (isRestrictedTime && !isAutoEODRunning)
+            {
+                ShowWarningAndClose("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted");
+                return;
             }
         }
+
+
+
+        //private void RunScenarios(string targetProcessName)
+        //{
+        //    if (isMessageBoxShown) return;
+
+        //    string lastData;
+        //    CheckSalesData(out lastData);
+
+        //    DateTime now = DateTime.Now;
+        //    DateTime lastDataDate;
+        //    bool isValidBusinessDate = DateTime.TryParseExact(lastData, "MMddyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out lastDataDate);
+
+        //    //Allow notepad to proceed silently if business date is invalid / missing
+        //    if (!isValidBusinessDate)
+        //    {
+        //        if (targetProcessName.Equals("notepad", StringComparison.OrdinalIgnoreCase))
+        //        {
+        //            // Proceed silently for notepad
+        //            return;
+        //        }
+        //        else
+        //        {
+        //            // For other processes, still show message and allow normal flow
+        //            ShowWarningAndClose($"Invalid or missing Business Date: '{lastData ?? "null"}'. Proceeding with system date.", "Date Parsing Warning");
+        //            return;
+        //        }
+        //    }
+
+        //    // Load EOD check data here (ensure EODYesterday1 gets value)
+        //    string dateYesterday = now.AddDays(-1).ToString("MMddyyyy");
+        //    string dateYesterday1 = now.AddDays(-1).ToString("yyyyMMdd");
+        //    DataTable EODYesterday = eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", dateYesterday1);
+        //    foreach (DataRow row in EODYesterday.Rows)
+        //    {
+        //        EODYesterday1 = int.Parse(row["COUNT(*)"].ToString());
+        //    }
+
+        //    bool isDifferentDate = lastDataDate.Date != now.Date;
+        //    bool isRestrictedTime = now.TimeOfDay > new TimeSpan(4, 1, 0) && now.TimeOfDay < new TimeSpan(8, 59, 0);
+        //    bool isAllowedEarlyTime = now.TimeOfDay >= new TimeSpan(0, 0, 0) && now.TimeOfDay < new TimeSpan(3, 59, 0);
+        //    bool isEODMissing = now.TimeOfDay >= new TimeSpan(9, 0, 0) && EODYesterday1 == 0;
+        //    bool isTimeToAutoEOD = now.Hour == 4 && now.Minute == 0 && !eodTriggeredToday && EODYesterday1 == 0;
+
+        //    if (isAllowedEarlyTime)
+        //        return;
+
+        //    if (isDifferentDate)
+        //    {
+        //        if (isEODMissing)
+        //        {
+        //            ShowWarningAndClose($"No EOD record found for yesterday. Please complete EOD for yesterday before proceeding. Last Business Date was '{lastData}'", "Missing EOD");
+        //        }
+        //        else if (isAutomatedEOD)
+        //        {
+        //            checkEODpreviousDates();
+        //            ShowWarningAndClose("Automatic End of Day has been processed.", "End of Day");
+        //        }
+        //        else if (isRestrictedTime)
+        //        {
+        //            ShowWarningAndClose("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted");
+        //        }
+        //        //else
+        //        //{
+        //        //    ShowWarningAndClose($"Different system date detected. Business Date was '{lastData}'", "Transaction Restricted");
+        //        //}
+        //    }
+        //    else // lastData == today
+        //    {
+        //        if (isRestrictedTime)
+        //        {
+        //            ShowWarningAndClose("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted");
+        //        }
+        //        //else if (isEODMissing)
+        //        //{
+        //        //    ShowWarningAndClose("No EOD record found for yesterday. Please complete EOD for yesterday before proceeding.", "Missing EOD");
+        //        //}
+        //    }
+        //}
 
         private void ShowWarningAndClose(string message, string title)
         {
@@ -1122,6 +1190,8 @@ namespace RobinsonMallLinkingWBOX
 
 
         #region Transaction Logic
+
+
         public void checkEODpreviousDates()
         {
             DialogResult result = MessageBox.Show(
