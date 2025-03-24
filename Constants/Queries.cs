@@ -13,6 +13,7 @@ namespace RobinsonMallLinkingWBOX.Constants
 
         //public const string SELECT_LAST_DATE = @"SELECT orderdata.AccDate AS TranscDate FROM orderdata WHERE orderdata.AccDate = '20241227' GROUP BY orderdata.AccDate";
         public const string SELECT_LAST_DATE = @"SELECT max(orderdata.AccDate) AS TranscDate FROM orderdata GROUP BY orderdata.AccDate ORDER BY orderdata.AccDate DESC LIMIT 1";
+        public const string SELECT_LAST_EODDATE = @"SELECT MAX(TransDate) AS TransDate FROM eodslsdata";
 
         public const string SELECT_ALL_DATA = @"SELECT 
                                                     orderdata.OrderNo,

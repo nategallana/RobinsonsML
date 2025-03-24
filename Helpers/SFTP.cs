@@ -248,7 +248,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
 
                 File.Copy(filePath, backupFilePath, true); // Move the file to the backup directory
                                                            //File.Delete(filePath);
-                logger.log(fileName,GlobalVar.batchcount, "Unsent");
+                logger.log(fileName, 0, "Unsent");
             }
 
             GlobalVar.ErrorSending = true;
@@ -298,7 +298,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
                 {
                     try
                     {
-                        Thread.Sleep(60000); // Wait for 2 seconds before retrying
+                        Thread.Sleep(5000); // Wait for 2 seconds before retrying
                         using (Session session = new Session())
                         {
                             session.Open(SessionOptions1);

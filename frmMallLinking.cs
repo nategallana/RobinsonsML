@@ -49,7 +49,8 @@ namespace RobinsonMallLinkingWBOX
         private readonly object eodLock = new object();
         private bool isAutoEODRunning = false;
         DateTime lastAutoEODRun = DateTime.MinValue; // Put this as a class-level field
-
+        private bool hasShownEODMissingWarning = false;
+        private bool hasShownRestrictedTimeWarning = false;
         public int TotalRecords, EODToday1, EODYesterday1, perTrans1, perTransYestday1;
         #endregion
 
@@ -402,18 +403,111 @@ namespace RobinsonMallLinkingWBOX
             _frm.Show();
         }
 
+        //private void eODToolStripMenuItem_Click(object sender, EventArgs e)
+        //{
+        //    //Scenarios();
+        //    //checkEODpreviousDates();
+
+        //    //string lastData;
+        //    //CheckSalesData(out lastData);
+
+        //    //DateTime now = DateTime.Now;
+
+        //    //DateTime sDate = DateTime.Now.AddDays(-1);
+
+        //    //string startDate = lastData;
+        //    //string endDate = now.ToString("MMddyyyy");
+
+        //    //convertFormatDate(startDate, endDate);
+
+        //    string lastData;
+        //    CheckSalesData(out lastData); // gets last EOD date in MMddyyyy format
+
+        //    DateTime startDate = DateTime.ParseExact(lastData, "MMddyyyy", null);
+        //    DateTime endDate = DateTime.Now.AddDays(-1); // up to yesterday
+
+        //    if (startDate > endDate)
+        //    {
+        //        MessageBox.Show("All EODs are already up to date.", "Notice", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        //        return;
+        //    }
+
+        //    // You may call convertFormatDate OR PerformEOD loop directly
+        //    for (DateTime date = startDate; date <= endDate; date = date.AddDays(1))
+        //    {
+        //        string mmddyyyy = date.ToString("MMddyyyy");
+        //        string yyyymmdd = date.ToString("yyyyMMdd");
+        //        string yesterday = date.AddDays(-1).ToString("yyyyMMdd");
+
+        //        PerformEOD(mmddyyyy, yyyymmdd, yesterday);
+        //    }
+
+        //    MessageBox.Show("EOD operations completed.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+        //}
+
         private void eODToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //Scenarios();
-            checkEODpreviousDates();
-            //DateTime eDate = GlobalVar.StartDate;
-            //DateTime sDate = DateTime.Now.AddDays(-1);
+            try
+            {
+                string lastData;
+                bool isFromEODTable;
 
-            //string startDate = sDate.ToString("MMddyyyy");
-            //string endDate = eDate.ToString("MMddyyyy");
+                // 📌 Check latest EOD or transaction date
+                CheckSalesData(out lastData, out isFromEODTable);
 
-            //convertFormatDate(startDate, endDate);
+                if (!string.IsNullOrWhiteSpace(lastData))
+                {
+                    DateTime startDate = DateTime.ParseExact(lastData, "MMddyyyy", CultureInfo.InvariantCulture);
+
+                    // ➕ Move startDate forward if it's from EOD table
+                    if (isFromEODTable)
+                        startDate = startDate.AddDays(1);
+
+                    // 📆 Get system date (today)
+                    DateTime systemToday = DateTime.Now.Date;
+
+                    // 📅 Get last transaction date (from TranscDate yyyyMMdd)
+                    DateTime lastTransactionDate = GetLastTransactionDate();
+
+                    // ✅ Determine end date logic
+                    DateTime endDate;
+
+                    if (lastTransactionDate < systemToday)
+                    {
+                        // 👉 No sales today → End date = yesterday
+                        endDate = systemToday.AddDays(-1);
+                    }
+                    else
+                    {
+                        // 👉 Sales today → End date = system date
+                        endDate = systemToday;
+                    }
+
+                    // 🔒 Ensure endDate is not before startDate
+                    if (endDate < startDate)
+                    {
+                        MessageBox.Show("EOD is already up to date. No pending days to process.", "Manual EOD", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+
+                    // 🔁 Call convertFormatDate
+                    string strStartDate = startDate.ToString("MMddyyyy");
+                    string strEndDate = endDate.ToString("MMddyyyy");
+
+                    convertFormatDate(strStartDate, strEndDate);
+                }
+                else
+                {
+                    MessageBox.Show("Unable to determine starting EOD date.", "EOD Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error occurred during manual EOD: {ex.Message}", "EOD Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
+
         #endregion
 
         #region Save every transaction into the Database
@@ -619,18 +713,16 @@ namespace RobinsonMallLinkingWBOX
             if (isMessageBoxShown || isAutoEODRunning) return;
 
             string lastData;
-            CheckSalesData(out lastData);
+            bool isFromEODTable; // <-- added to match the new method signature
+            CheckSalesData(out lastData, out isFromEODTable);
 
             DateTime now = DateTime.Now;
-            DateTime lastDataDate;
-            bool isValidBusinessDate = DateTime.TryParseExact(lastData, "MMddyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out lastDataDate);
-
-            if (!isValidBusinessDate)
+            if (!DateTime.TryParseExact(lastData, "MMddyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime lastDataDate))
             {
-                if (targetProcessName.Equals("notepad", StringComparison.OrdinalIgnoreCase))
-                    return;
-
-                ShowWarningAndClose($"Invalid or missing Business Date: '{lastData ?? "null"}'. Proceeding with system date.", "Date Parsing Warning");
+                if (!targetProcessName.Equals("notepad", StringComparison.OrdinalIgnoreCase))
+                {
+                    ShowWarningOnce("Invalid or missing Business Date. Proceeding with system date.", "Date Parsing Warning");
+                }
                 return;
             }
 
@@ -641,42 +733,40 @@ namespace RobinsonMallLinkingWBOX
                 EODYesterday1 = int.Parse(row["COUNT(*)"].ToString());
             }
 
-            bool isAllowedEarlyTime = now.TimeOfDay < new TimeSpan(4, 0, 0); // Before 4 AM
-            bool isTimeToAutoEOD = now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(4, 1, 0); // Between 4:00:00 and 4:00:59
+            bool isAllowedEarlyTime = now.TimeOfDay < new TimeSpan(4, 0, 0);
+            bool isTimeToAutoEOD = now.TimeOfDay >= new TimeSpan(4, 0, 0);
             bool isRestrictedTime = now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0);
             bool isDifferentDate = lastDataDate.Date != now.Date;
             bool isEODMissing = EODYesterday1 == 0;
 
-            // Allow execution before 4 AM freely
             if (isAllowedEarlyTime)
             {
                 return;
             }
-            // Auto-EOD block (only once per day)
             else if (isTimeToAutoEOD && isEODMissing && lastAutoEODRun.Date != now.Date)
             {
                 isAutoEODRunning = true;
                 appCloseTimer.Stop();
-
+                ShowWarningOnce("Automatic End of Day is being processed.", "End of Day");
                 lastAutoEODRun = now;
-                checkEODpreviousDates();
+                checkEODpreviousDates_Auto();
 
                 isAutoEODRunning = false;
                 appCloseTimer.Start();
 
-                ShowWarningAndClose("Automatic End of Day has been processed.", "End of Day");
+                //ShowWarningOnce("Automatic End of Day has been processed.", "End of Day");
                 return;
             }
-            // Missing EOD warning — after 9 AM only
-            else if (now.TimeOfDay >= new TimeSpan(9, 0, 0) && isDifferentDate && isEODMissing)
+            else if (now.TimeOfDay >= new TimeSpan(9, 0, 0) && isDifferentDate && isEODMissing && !hasShownEODMissingWarning)
             {
-                ShowWarningAndClose($"No EOD record found for yesterday. Please complete EOD for yesterday before proceeding. Last Business Date was '{lastData}'", "Missing EOD");
+                hasShownEODMissingWarning = true;
+                ShowWarningOnce($"No EOD record found for yesterday.\nPlease complete EOD first. Last Business Date was '{lastData}'", "Missing EOD");
                 return;
             }
-            // Restricted time (only after AutoEOD has completed, not during it)
-            else if (isRestrictedTime && !isAutoEODRunning)
+            else if (isRestrictedTime && !isAutoEODRunning && !hasShownRestrictedTimeWarning)
             {
-                ShowWarningAndClose("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted");
+                hasShownRestrictedTimeWarning = true;
+                ShowWarningOnce("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted");
                 return;
             }
         }
@@ -761,15 +851,18 @@ namespace RobinsonMallLinkingWBOX
         //    }
         //}
 
-        private void ShowWarningAndClose(string message, string title)
+        private void ShowWarningOnce(string message, string title)
         {
-            isMessageBoxShown = true;
-            DialogResult result = ShowMessage(message, title, MessageBoxIcon.Warning);
-
-            if (result == DialogResult.OK)
+            if (!isMessageBoxShown)
             {
-                CloseOtherAppIfRunning();
-                isMessageBoxShown = false;
+                isMessageBoxShown = true;
+                DialogResult result = ShowMessage(message, title, MessageBoxIcon.Warning);
+
+                if (result == DialogResult.OK)
+                {
+                    CloseOtherAppIfRunning();
+                    isMessageBoxShown = false;
+                }
             }
         }
 
@@ -812,10 +905,14 @@ namespace RobinsonMallLinkingWBOX
         private void CloseOtherAppIfRunning()
         {
             string[] allProcessesToKill = { "notepad", "WirelessLink", "wBoxBridge" };
+            List<string> closedApps = new List<string>();
+            List<string> failedApps = new List<string>();
 
             foreach (var procName in allProcessesToKill)
             {
                 var processes = Process.GetProcessesByName(procName);
+                bool hasError = false;
+
                 if (processes.Any())
                 {
                     foreach (var process in processes)
@@ -824,18 +921,35 @@ namespace RobinsonMallLinkingWBOX
                         {
                             process.Kill();
                             process.WaitForExit();
-                            MessageBox.Show($"The application '{procName}' was closed successfully.",
-                                            "Application Closed", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
-                        catch (Exception ex)
+                        catch
                         {
-                            MessageBox.Show($"Failed to close the application '{procName}'. Error: {ex.Message}",
-                                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            hasError = true;
                         }
                     }
+
+                    if (hasError)
+                        failedApps.Add(procName);
+                    else
+                        closedApps.Add(procName);
                 }
             }
+
+            // Log summary silently
+            if (closedApps.Count > 0 || failedApps.Count > 0)
+            {
+                string summary = "";
+
+                if (closedApps.Count > 0)
+                    summary += "Closed applications:\n- " + string.Join("\n- ", closedApps) + "\n\n";
+
+                if (failedApps.Count > 0)
+                    summary += "Failed to close:\n- " + string.Join("\n- ", failedApps);
+
+                ErrorLogger.LogError("[AppClosure] " + summary.Trim());
+            }
         }
+
 
         private void ScenarioTimer_Tick(object sender, EventArgs e)
         {
@@ -849,7 +963,7 @@ namespace RobinsonMallLinkingWBOX
         #endregion
 
         #region Perform EOD
-        public void PerformEOD(string mmddyyyy, string yyyymmdd, string yesterday)
+        public void PerformEOD(string mmddyyyy, string yyyymmdd, string yesterday, bool silentMode = false)
         {
             InitializeEODValues();
 
@@ -859,7 +973,7 @@ namespace RobinsonMallLinkingWBOX
 
             #region Discount
             DataTable discTABLE = transactionDataStorage.GetDISCOUNT(yyyymmdd);
-            foreach (DataRow row in discTABLE.Rows) 
+            foreach (DataRow row in discTABLE.Rows)
             {
                 EODTOTDISC = row["DiscountValue"].ToSafeDecimal();
                 EODNODISC = row["CountDiscount"].ToSafeInteger();
@@ -885,8 +999,8 @@ namespace RobinsonMallLinkingWBOX
                 //EODNOVOID = row["TaxAmount"].ToSafeInteger(); // done
                 //EODTOTDISC = row["DiscountValue"].ToSafeDecimal(); // done
                 //EODNODISC = row["TaxAmount"].ToSafeInteger(); // done
-                //EODTOTRFD = row["TaxAmount"].ToSafeDecimal(); no refund in wbox
-                //EODNORFD = row["TaxAmount"].ToSafeInteger(); no refund in wbox
+                //EODTOTRFD = row["TaxAmount"].ToSafeDecimal(); // no refund in wbox
+                //EODNORFD = row["TaxAmount"].ToSafeInteger(); // no refund in wbox
                 //EODOTHRNEGA = row["-"].ToSafeDecimal();
                 //EODNOOTHRNEGA = row["-"].ToSafeInteger();
                 EODTOTSRCHR = row["ServiceCharge"].ToSafeDecimal(); // done
@@ -894,21 +1008,20 @@ namespace RobinsonMallLinkingWBOX
                 //EODPRVGRNTOT = row["TaxAmount"].ToSafeDecimal(); // data yesterday
                 //EODCRRCNTR = row[].ToSafeInteger(); // done
                 //EODCRRGRNTOT = row["TaxAmount"].ToSafeDecimal(); // done
-
                 //EODNOV = row["TaxAmount"].ToSafeDecimal();
                 //EODMISC = row["TaxAmount"].ToSafeDecimal();
                 //EODLOCTAX = row["TaxAmount"].ToSafeDecimal();
                 //EODTOTCRDSLS = row["TaxAmount"].ToSafeDecimal();
                 //EODTOTCRDVAT = row["TaxAmount"].ToSafeDecimal();
-                //EODTOTNONVAT = row["TaxAmount"].ToSafeDecimal());
+                //EODTOTNONVAT = row["TaxAmount"].ToSafeDecimal();
                 //EODPHRMSLS = row["TaxAmount"].ToSafeDecimal();
-                //EODNONPHRMSLS = row["TaxAmount"].ToSafeDecimal());
+                //EODNONPHRMSLS = row["TaxAmount"].ToSafeDecimal();
                 //EODDISABLEDISC = row["TaxAmount"].ToSafeDecimal();
                 //EODPERCRENT = row["TaxAmount"].ToSafeDecimal();
                 //EODTOTAMNTREPRNT = row["TaxAmount"].ToSafeDecimal();
                 //EODNOREPRNT = EODNOREPRNT + 1;
-                EODTRNSDATE = row["TranscDate"].ToString();
-                //EODTRNSDATE = DateTime.Parse(row["TranscDate"].ToString());
+
+                EODTRNSDATE = DateTime.ParseExact(row["TranscDate"].ToString(), "yyyyMMdd", null).ToString("MMddyyyy");
             }
             #endregion
 
@@ -964,36 +1077,34 @@ namespace RobinsonMallLinkingWBOX
 
                 string lastFourDigits = EODTENTID.Substring(EODTENTID.Length - 4);
                 string lastTransac = yyyymmdd.Substring(yyyymmdd.Length - 4);
-
                 string folderPath = dir;
                 string fileName = lastFourDigits + lastTransac + "." + EODTERMNO;
 
                 List<string> filePaths = new List<string>();
-                // Generate Fixed-Width File
                 GenerateFixedWidthFile(EODSLS, folderPath, fileName, filePaths);
 
-                int batchSize = 5; // Example: Batch size of 5
+                int batchSize = 5;
                 for (int i = 0; i < filePaths.Count; i += batchSize)
                 {
                     List<string> batchFiles = filePaths.GetRange(i, Math.Min(batchSize, filePaths.Count - i));
                     SendFilesInBatch(batchFiles);
                 }
+
                 CheckFileSendingStatus();
-                #region Notif
-                // Simulate sending sales file to server
-                //if (SendSalesFileToServer())
-                //{
-                //    MessageBox.Show("Sales file successfully sent to RLC server.", "EOD Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                //}
-                //else
-                //{
-                //    MessageBox.Show("Sales file is not sent to RLC server. Please contact your POS vendor.", "EOD Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                //}
-                #endregion
+
+                // Optional Success Notification (only if not silent)
+                if (!silentMode)
+                {
+                    MessageBox.Show("EOD Process Complete.", "EOD Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
-            catch (Exception ex) {
-                MessageBox.Show($"Error: {ex.Message}\n{ex.StackTrace}");
-                ErrorLogger.LogError($"Error: {ex.Message}\n{ex.StackTrace}");
+            catch (Exception ex)
+            {
+                ErrorLogger.LogError($"EOD ERROR: {ex.Message}\n{ex.StackTrace}");
+                if (!silentMode)
+                {
+                    MessageBox.Show($"Error: {ex.Message}", "EOD Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -1312,20 +1423,234 @@ namespace RobinsonMallLinkingWBOX
         }
 
 
-        public void CheckSalesData(out string lastData)
+        public void checkEODpreviousDates_Auto()
         {
-            lastData = string.Empty;
-
             DataTable ACCdate = transactionDataStorage.GetDataAccDate();
-             
+
             if (ACCdate != null && ACCdate.Rows.Count > 0)
             {
-                DataRow row = ACCdate.Rows[0]; // Get the first row
-                string lastDateRaw = row["TranscDate"].ToString();
-                DateTime parsedDate = DateTime.ParseExact(lastDateRaw, "yyyyMMdd", CultureInfo.InvariantCulture);
-                lastData = parsedDate.ToString("MMddyyyy");
+                string dateToday_MMddyyyy = DateTime.Now.ToString("MMddyyyy");
+                string dateYesterday_MMddyyyy = DateTime.Now.AddDays(-1).ToString("MMddyyyy");
+                string summaryMessage = "";
+
+                foreach (DataRow row in ACCdate.Rows)
+                {
+                    string LAST_DATE_YYYYMMDD = row["TranscDate"].ToString();
+
+                    // Convert to MMddyyyy
+                    DateTime parsedDate = DateTime.ParseExact(LAST_DATE_YYYYMMDD, "yyyyMMdd", CultureInfo.InvariantCulture);
+                    LAST_DATE_MMDDYYYY = parsedDate.ToString("MMddyyyy");
+
+                    // Also get yesterday of LAST_DATE_MMDDYYYY (in MMddyyyy format)
+                    YESTERDAY_MMDDYYYY = parsedDate.AddDays(-1).ToString("MMddyyyy");
+                }
+
+                // ✅ All variables now use MMddyyyy format
+                TotalRecords = GetCountFromTable(eodSLSDataStorage.CheckEODtable(), "CountEOD");
+                EODToday1 = GetCountFromTable(eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", dateToday_MMddyyyy), "COUNT(*)");
+                EODYesterday1 = GetCountFromTable(eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", dateYesterday_MMddyyyy), "COUNT(*)");
+                perTrans1 = GetCountFromTable(eodSLSDataStorage.SelectPERTRANS("orderdata", "AccDate", dateToday_MMddyyyy), "COUNT(*)");
+                perTransYestday1 = GetCountFromTable(eodSLSDataStorage.SelectPERTRANS("orderdata", "AccDate", dateYesterday_MMddyyyy), "COUNT(*)");
+
+                try
+                {
+                    #region EOD Scenarios Logic
+
+                    if (EODYesterday1 != 0 && perTrans1 != 0 && EODToday1 == 0)
+                    {
+                        convertFormatDate(LAST_DATE_MMDDYYYY, LAST_DATE_MMDDYYYY);
+                        summaryMessage += "✔ Automatic End of Day has been performed successfully.\n";
+                    }
+                    else if (EODToday1 != 0)
+                    {
+                        //summaryMessage += "ℹ EOD has already been performed for today.\n";
+                    }
+                    else if (EODToday1 == 0 && perTrans1 == 0)
+                    {
+                        convertFormatDate(LAST_DATE_MMDDYYYY, LAST_DATE_MMDDYYYY);
+                        summaryMessage += "✔ No sales for today. Automatic End of Day has still been processed.\n";
+                    }
+                    else
+                    {
+                        convertFormatDate(LAST_DATE_MMDDYYYY, LAST_DATE_MMDDYYYY);
+                        //summaryMessage += "⚠ Automatic End of Day fallback executed.\n";
+                    }
+
+                    #endregion
+                }
+                catch (Exception ex)
+                {
+                    summaryMessage += $"❌ An unexpected error occurred during Auto EOD:\n{ex.Message}\n";
+                }
+
+                // One summary MessageBox at the end (or you can just log this instead if needed)
+                if (!string.IsNullOrEmpty(summaryMessage))
+                {
+                    //MessageBox.Show(summaryMessage.Trim(), "EOD Summary", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
         }
+
+
+
+        //public void checkEODpreviousDates_Auto()
+        //{
+        //    DataTable ACCdate = transactionDataStorage.GetDataAccDate();
+        //    if (ACCdate != null && ACCdate.Rows.Count > 0)
+        //    {
+        //        string dateToday = DateTime.Now.ToString("yyyyMMdd");
+        //        string dateYesterday = DateTime.Now.AddDays(-1).ToString("yyyyMMdd");
+        //        string summaryMessage = "";
+
+        //        foreach (DataRow row in ACCdate.Rows)
+        //        {
+        //            LAST_DATE_YYYYMMDD = row["TranscDate"].ToString();
+        //            DateTime parsedDate = DateTime.ParseExact(LAST_DATE_YYYYMMDD, "yyyyMMdd", CultureInfo.InvariantCulture);
+
+        //            LAST_DATE_MMDDYYYY = parsedDate.ToString("MMddyyyy");
+        //            LAST_DATE_YYYYMMDD = parsedDate.ToString("yyyyMMdd");
+
+        //            DateTime yesterday = DateTime.Now.AddDays(-1);
+        //            YESTERDAY_MMDDYYYY = yesterday.ToString("MMddyyyy");
+
+        //            DateTime yesterday1 = parsedDate.AddDays(-1);
+        //            YESTERDAY_YYYYMMDD = yesterday1.ToString("yyyyMMdd");
+        //        }
+
+        //        // Load all your count variables
+        //        TotalRecords = GetCountFromTable(eodSLSDataStorage.CheckEODtable(), "CountEOD");
+        //        EODToday1 = GetCountFromTable(eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", dateToday), "COUNT(*)");
+        //        EODYesterday1 = GetCountFromTable(eodSLSDataStorage.SelectEOD("eodslsdata", "TransDate", dateYesterday), "COUNT(*)");
+        //        perTrans1 = GetCountFromTable(eodSLSDataStorage.SelectPERTRANS("orderdata", "AccDate", dateToday), "COUNT(*)");
+        //        perTransYestday1 = GetCountFromTable(eodSLSDataStorage.SelectPERTRANS("orderdata", "AccDate", dateYesterday), "COUNT(*)");
+
+        //        try
+        //        {
+        //            #region EOD Scenarios Logic
+
+        //            if (EODYesterday1 != 0 && perTrans1 != 0 && EODToday1 == 0)
+        //            {
+        //                convertFormatDate(LAST_DATE_MMDDYYYY, LAST_DATE_MMDDYYYY);
+        //                summaryMessage += "✔ Automatic End of Day has been performed successfully.\n";
+        //            }
+        //            else if (EODToday1 != 0)
+        //            {
+        //                summaryMessage += "ℹ EOD has already been performed for today.\n";
+        //            }
+        //            else if (EODToday1 == 0 && perTrans1 == 0)
+        //            {
+        //                convertFormatDate(LAST_DATE_MMDDYYYY, LAST_DATE_MMDDYYYY);
+        //                summaryMessage += "✔ No sales for today. Automatic End of Day has still been processed.\n";
+        //            }
+        //            else
+        //            {
+        //                convertFormatDate(LAST_DATE_MMDDYYYY, LAST_DATE_MMDDYYYY);
+        //                summaryMessage += "⚠ Automatic End of Day fallback executed.\n";
+        //            }
+
+        //            #endregion
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            summaryMessage += $"❌ An unexpected error occurred during Auto EOD:\n{ex.Message}\n";
+        //        }
+
+        //        // Show just one summary popup at the end
+        //        if (!string.IsNullOrEmpty(summaryMessage))
+        //        {
+        //            MessageBox.Show(summaryMessage.Trim(), "EOD Summary", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        //        }
+        //    }
+        //}
+
+        private int GetCountFromTable(DataTable table, string columnName)
+        {
+            foreach (DataRow row in table.Rows)
+            {
+                if (int.TryParse(row[columnName].ToString(), out int count))
+                    return count;
+            }
+            return 0;
+        }
+
+
+        public void CheckSalesData(out string lastData, out bool isFromEODTable)
+        {
+            lastData = string.Empty;
+            isFromEODTable = false;
+
+            // Try to get the last successful EOD date
+            DataTable ACCdate = eodSLSDataStorage.GetDataEodDate();
+
+            if (ACCdate != null && ACCdate.Rows.Count > 0)
+            {
+                DataRow row = ACCdate.Rows[0];
+                string lastDateRaw = row["TransDate"].ToString();
+
+                if (!string.IsNullOrWhiteSpace(lastDateRaw))
+                {
+                    try
+                    {
+                        DateTime parsedDate = DateTime.ParseExact(lastDateRaw, "MMddyyyy", CultureInfo.InvariantCulture);
+                        lastData = parsedDate.ToString("MMddyyyy");
+                        isFromEODTable = true; // ✅ Confirm source is EOD table
+                        return;
+                    }
+                    catch (FormatException)
+                    {
+                        // fallback continues below
+                        lastData = string.Empty;
+                    }
+                }
+            }
+
+            // Fallback: Try to get the last transaction date
+            DataTable transDateTable = transactionDataStorage.GetDataAccDate();
+            if (transDateTable != null && transDateTable.Rows.Count > 0)
+            {
+                DataRow row = transDateTable.Rows[0];
+                string transDateRaw = row["TranscDate"].ToString();
+
+                if (!string.IsNullOrWhiteSpace(transDateRaw))
+                {
+                    try
+                    {
+                        DateTime parsedDate = DateTime.ParseExact(transDateRaw, "yyyyMMdd", CultureInfo.InvariantCulture);
+                        lastData = parsedDate.ToString("MMddyyyy");
+                        isFromEODTable = false; // ✅ Source is transaction table fallback
+                    }
+                    catch (FormatException)
+                    {
+                        lastData = string.Empty;
+                    }
+                }
+            }
+        }
+
+
+        private DateTime GetLastTransactionDate()
+        {
+            DataTable transDateTable = transactionDataStorage.GetDataAccDate();
+
+            if (transDateTable != null && transDateTable.Rows.Count > 0)
+            {
+                string transDateRaw = transDateTable.Rows[0]["TranscDate"].ToString(); // in yyyyMMdd
+                if (!string.IsNullOrWhiteSpace(transDateRaw))
+                {
+                    try
+                    {
+                        return DateTime.ParseExact(transDateRaw, "yyyyMMdd", CultureInfo.InvariantCulture).Date;
+                    }
+                    catch (FormatException)
+                    {
+                        // fallback to system date if parse fails
+                    }
+                }
+            }
+
+            return DateTime.Now.AddDays(-1).Date; // Fallback if no data
+        }
+
 
         public void convertFormatDate(string startDate, string endDate) 
         {
@@ -1341,10 +1666,10 @@ namespace RobinsonMallLinkingWBOX
                     string yyyymmdd = date.ToString("yyyyMMdd");
                     string yesterday = date.AddDays(-1).ToString("yyyyMMdd");
 
-                    PerformEOD(mmddyyyy, yyyymmdd, yesterday);
+                    PerformEOD(mmddyyyy, yyyymmdd, yesterday, silentMode: true);
                 }
 
-                MessageBox.Show("EOD operations completed for the date range.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                //MessageBox.Show("EOD operations completed for the date range.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {

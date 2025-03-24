@@ -146,13 +146,18 @@ namespace RobinsonMallLinkingWBOX
                 ErrorLogger.LogError($"Error: {ex.Message}\n{ex.StackTrace}");
             }
         }
+
+
+
         private void btnClose_Click(object sender, EventArgs e)
         {
             this.Close();
         }
+
+
+
         private void btnGenerate_Click(object sender, EventArgs e)
         {
-            Scenarios();
 
             DateTime start = dtpFrom.Value;
             DateTime end = dtpTo.Value;
@@ -162,6 +167,9 @@ namespace RobinsonMallLinkingWBOX
                 PerformEOD(day.ToString("MMddyyyy"), day.ToString("yyyyMMdd"), day.AddDays(-1).ToString("yyyyMMdd"));
             }
         }
+
+
+
 
         private void frmDateRange_Load(object sender, EventArgs e)
         {
@@ -188,43 +196,43 @@ namespace RobinsonMallLinkingWBOX
 
 
 
-        public void Scenarios()
-        {
-            DateTime now = DateTime.Now;
+        //public void Scenarios()
+        //{
+        //    DateTime now = DateTime.Now;
 
-            if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
-            {
-                MessageBox.Show("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        //    if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
+        //    {
+        //        MessageBox.Show("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
-                // Close the different application (e.g., "OtherApp")
-                string targetProcessName = "wDesktop"; // Replace with the actual process name without ".exe"
+        //        // Close the different application (e.g., "OtherApp")
+        //        string targetProcessName = "wDesktop"; // Replace with the actual process name without ".exe"
 
-                var processes = Process.GetProcessesByName(targetProcessName);
-                if (processes.Any())
-                {
-                    foreach (var process in processes)
-                    {
-                        try
-                        {
-                            process.Kill();
-                            process.WaitForExit();
-                            MessageBox.Show($"Not allowed to transact at this time.", "Application Closed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
-                                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                    }
-                }
-                else
-                {
-                    MessageBox.Show($"No running instance of '{targetProcessName}' was found.",
-                                    "Application Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                return;
-            }
-        }
+        //        var processes = Process.GetProcessesByName(targetProcessName);
+        //        if (processes.Any())
+        //        {
+        //            foreach (var process in processes)
+        //            {
+        //                try
+        //                {
+        //                    process.Kill();
+        //                    process.WaitForExit();
+        //                    MessageBox.Show($"Not allowed to transact at this time.", "Application Closed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+        //                }
+        //                catch (Exception ex)
+        //                {
+        //                    MessageBox.Show($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
+        //                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        //                }
+        //            }
+        //        }
+        //        else
+        //        {
+        //            MessageBox.Show($"No running instance of '{targetProcessName}' was found.",
+        //                            "Application Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        //        }
+        //        return;
+        //    }
+        //}
         public void PerformEOD(string mmddyyyy, string yyyymmdd, string yesterday)
         {
             InitializeEODValues();
@@ -348,7 +356,7 @@ namespace RobinsonMallLinkingWBOX
                 // Generate Fixed-Width File
                 GenerateFixedWidthFile(EODSLS, folderPath, fileName, filePaths);
 
-                int batchSize = 5; // Example: Batch size of 5
+                int batchSize = 1; // Example: Batch size of 5
                 for (int i = 0; i < filePaths.Count; i += batchSize)
                 {
                     List<string> batchFiles = filePaths.GetRange(i, Math.Min(batchSize, filePaths.Count - i));
@@ -375,7 +383,6 @@ namespace RobinsonMallLinkingWBOX
         }
         private void GenerateFixedWidthFile(EODSLSData eodData, string folderPath, string fileName, List<string> filePaths)
         {
-            //SFTP sftpClient = new SFTP();
             string batchDate = DateTime.Today.ToString("MMM-dd-yyyy");
             string batchTime = DateTime.Now.ToString("hh:mm:ss tt");
 
@@ -387,8 +394,6 @@ namespace RobinsonMallLinkingWBOX
                 Directory.CreateDirectory(folderPath);
             }
 
-
-
             DataTable checkBatchFileName = batchfileDataStorage.CheckBatchFileName(); // Ensure this gets fresh data
 
             bool fileExists = false;
@@ -396,14 +401,21 @@ namespace RobinsonMallLinkingWBOX
 
             // Get the latest batch count for the matching file
             var latestRow = checkBatchFileName.AsEnumerable()
-                .Where(row => row["FileName"].ToString().Length >= 11 &&
-                              row["FileName"].ToString().Substring(0, 11) == fileName) // Ensure correct file match
-                .OrderByDescending(row => Convert.ToInt32(row["Count"])) // Get the highest count
-                .FirstOrDefault();
+            .Where(row => row["FileName"].ToString().Length > 11 &&
+                          row["FileName"].ToString().Substring(0, 11) == fileName.Substring(0, 11)) // Compare first 11 characters
+            .Select(row => new
+            {
+                FileName = row["FileName"].ToString(),
+                BatchCount = row["FileName"].ToString().Substring(11) // Get the part after the first 11 characters
+            })
+            .OrderByDescending(file => Convert.ToInt32(file.BatchCount)) // Sort by batch count (converted to integer)
+            .FirstOrDefault();
 
             if (latestRow != null)
             {
-                latestBatchCount = Convert.ToInt32(latestRow["Count"]);
+                // Extract the batch count from the latest file found
+                string batchCountStr = latestRow.BatchCount;
+                batchCount = batchCountStr.Length > 0 ? Convert.ToInt32(batchCountStr) + 1 : 1;
             }
 
             // Check if the file already exists in the DataTable
@@ -411,19 +423,14 @@ namespace RobinsonMallLinkingWBOX
             {
                 string existingFileName = row["FileName"].ToString(); // Example: '67890214.011'
                 string extractedPart = existingFileName.Length >= 11 ? existingFileName.Substring(0, 11) : existingFileName;
-                //int existingBatchCount = Convert.ToInt32(row["Count"]);
 
-                if (extractedPart == fileName)
+                if (extractedPart == fileName.Substring(0, 11))
                 {
                     fileExists = true;
-                    batchCount = latestBatchCount + 1; // Use the latest count
-
+                    // Here, batchCount is already set from the logic above, no need to reset it.
                     break; // Exit the loop once the match is found
                 }
             }
-
-
-
 
             // Create or update the batch file entry
             if (fileExists)
@@ -433,7 +440,7 @@ namespace RobinsonMallLinkingWBOX
                     FileName = fileName,
                     TransDate = batchDate,
                     TransTime = batchTime,
-                    Count = batchCount,
+                    Count = batchCount, // Use the batch count derived from the file name
                     Status = status
                 };
                 GlobalVar.batchcount = batchCount;
@@ -441,7 +448,7 @@ namespace RobinsonMallLinkingWBOX
             }
             else
             {
-                batchCount = 1;
+                batchCount = 1; // Start from 1 if no existing batch is found
 
                 var batchfile = new BatchFile
                 {
@@ -481,7 +488,6 @@ namespace RobinsonMallLinkingWBOX
                 writer.WriteLine($"15{eodData.PrvGrndTot.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"16{eodData.CurrEODcntr.ToString().PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"17{eodData.CurrGrndTot.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
-                //writer.WriteLine($"18{DateTime.Parse(eodData.TransDate).ToString("MM/dd/yy").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"19{eodData.Novelty.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"20{eodData.Misc.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"21{eodData.LocTax.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
@@ -494,7 +500,6 @@ namespace RobinsonMallLinkingWBOX
                 writer.WriteLine($"28{eodData.PercRent.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"29{eodData.TotAmntRePrnt.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"30{eodData.NoRePrnt.ToString().PadLeft(totalWidth - 2, '0')}");
-
             }
             filePaths.Add(fullFilePath);
             //sftpClient.SftpTrans(fullFilePath, host, username, password);

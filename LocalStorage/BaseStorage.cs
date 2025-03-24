@@ -284,6 +284,10 @@ namespace RobinsonMallLinkingWBOX.LocalStorage
         {
             return sqlite.Select(sqlQuery);
         }
+        public object ExecuteScalar(string sqlQuery)
+        {
+            return sqlite.ExecuteScalar(sqlQuery);
+        }
 
         public int RowsCount()
         {

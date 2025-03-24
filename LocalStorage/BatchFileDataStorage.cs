@@ -22,6 +22,14 @@ namespace RobinsonMallLinkingWBOX.LocalStorage
             string query = string.Format(Queries.SELECT_BATCHNAME);
             return GetDataTable(query);
         }
+
+        public int GetLatestBatchCount(string datePrefix)
+        {
+            string query = $"SELECT MAX([Count]) FROM {_tableName} WHERE FileName LIKE '{datePrefix}.%'";
+            object result = ExecuteScalar(query);
+            return result != DBNull.Value && result != null ? Convert.ToInt32(result) : 0;
+        }
+
     }
 
 }

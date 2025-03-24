@@ -19,6 +19,12 @@ namespace RobinsonMallLinkingWBOX.LocalStorage
             return GetDataTable(query);
         }
 
+        public DataTable GetDataEodDate()
+        {
+            string query = string.Format(Queries.SELECT_LAST_EODDATE);
+            return GetDataTable(query);
+        }
+
         public DataTable SelectEOD(string tableName, string columnName, string dateValue)
         {
             string query;
