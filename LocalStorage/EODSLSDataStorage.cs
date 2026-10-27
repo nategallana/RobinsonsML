@@ -1,6 +1,7 @@
 ﻿using RobinsonMallLinkingWBOX.Constants;
 using RobinsonMallLinkingWBOX.Helpers;
 using RobinsonMallLinkingWBOX.Models;
+using System;
 using System.Data;
 
 namespace RobinsonMallLinkingWBOX.LocalStorage
@@ -25,6 +26,11 @@ namespace RobinsonMallLinkingWBOX.LocalStorage
             return GetDataTable(query);
         }
 
+        public DataTable FirstEOD()
+        {
+            string query = string.Format(Queries.SELECT_FIRST_DATA);
+            return GetDataTable(query);
+        }
         public DataTable SelectEOD(string tableName, string columnName, string dateValue)
         {
             string query;

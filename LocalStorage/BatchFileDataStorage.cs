@@ -30,6 +30,12 @@ namespace RobinsonMallLinkingWBOX.LocalStorage
             return result != DBNull.Value && result != null ? Convert.ToInt32(result) : 0;
         }
 
+        public DataTable getUnsentFile()
+        {
+            string query = string.Format(Queries.SELECT_UNSENTBATCH,"Unsent");
+            return GetDataTable(query);
+        }
+
     }
 
 }

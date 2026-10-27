@@ -10,7 +10,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
     public class ErrorLogger
     {
         private static readonly string logFileName = "ErrorLog.txt";
-        private static readonly string logFilePath = "C:\\Restrnt\\New folder\\" + logFileName;
+        private static readonly string logFilePath = "C:\\New folder\\" + logFileName;
 
         public static void LogError(string errorMessage)
         {

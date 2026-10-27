@@ -125,7 +125,7 @@
             this.btnGenerate.Name = "btnGenerate";
             this.btnGenerate.Size = new System.Drawing.Size(119, 40);
             this.btnGenerate.TabIndex = 39;
-            this.btnGenerate.Text = "Generate";
+            this.btnGenerate.Text = "&Generate";
             this.btnGenerate.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.btnGenerate.UseVisualStyleBackColor = false;
             this.btnGenerate.Click += new System.EventHandler(this.btnGenerate_Click);

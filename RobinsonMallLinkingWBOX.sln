@@ -5,6 +5,8 @@ VisualStudioVersion = 17.8.34511.84
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RobinsonMallLinkingWBOX", "RobinsonMallLinkingWBOX.csproj", "{718E578C-DDFB-4FCE-90E6-328A445A535A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RobScenario", "RobScenario\RobScenario.csproj", "{F2539F62-3399-4981-BEF6-52E66AA60711}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{718E578C-DDFB-4FCE-90E6-328A445A535A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{718E578C-DDFB-4FCE-90E6-328A445A535A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{718E578C-DDFB-4FCE-90E6-328A445A535A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F2539F62-3399-4981-BEF6-52E66AA60711}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2539F62-3399-4981-BEF6-52E66AA60711}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2539F62-3399-4981-BEF6-52E66AA60711}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2539F62-3399-4981-BEF6-52E66AA60711}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -27,11 +27,28 @@ namespace RobinsonMallLinkingWBOX
             InitializeConfiguration();
         }
 
+        //KIM_07042025
+        public static void LoadSystemConfig()
+        {
+            var writer = new SettingsWriter(Path.Combine(Application.StartupPath, "Settings"), false);
+            _systemConfig = writer.Read<Configuration>("Configuration");
+        }
         private void btnSave_Click(object sender, EventArgs e)
         {
             _settings.Save<Configuration>(SystemConfiguration, "Configuration");
-            MessageBox.Show("Configuration has been saved successfully! \n\nPlease restart the application.", "Notice");
-            Application.Exit();
+
+            var result = MessageBox.Show(
+                "Configuration has been saved successfully!\n\nWould you like to restart the application now?",
+                "Notice",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Information
+            );
+
+            if (result == DialogResult.Yes)
+            {
+                Application.Restart();
+                System.Diagnostics.Process.Start(Application.ExecutablePath);
+            }
         }
 
         public void InitializeConfiguration()
@@ -48,6 +65,18 @@ namespace RobinsonMallLinkingWBOX
                 txtTerminal.Text = _systemConfig.TerminalNo.Trim().ToString();
                 txtTempDB.Text = _systemConfig.TempMDB.Trim().ToString();
                 txtSSHKey.Text = _systemConfig.SSHKey.Trim().ToString();
+                txtsecpass.Text = _systemConfig.SecPass?.Trim(); // << your textbox
+
+
+                // Safely parse, fallback to default time if empty
+                TimeSpan startTime = TimeSpan.Zero;
+                TimeSpan endTime = TimeSpan.Zero;
+
+                TimeSpan.TryParse(_systemConfig.StartTime, out startTime);
+                TimeSpan.TryParse(_systemConfig.EndTime, out endTime);
+
+                dtpstart.Value = DateTime.Today.Add(startTime);
+                dtpend.Value = DateTime.Today.Add(endTime);
             }
         }
 
@@ -65,7 +94,10 @@ namespace RobinsonMallLinkingWBOX
                     TenantName = txtTenantName.Text.Trim().ToString(),
                     TerminalNo = txtTerminal.Text.Trim().ToString(),
                     TempMDB = txtTempDB.Text.Trim().ToString(),
-                    SSHKey = txtSSHKey.Text.Trim().ToString()
+                    SSHKey = txtSSHKey.Text.Trim().ToString(),
+                    SecPass = txtsecpass.Text.Trim(), // << your textbox
+                    StartTime = dtpstart.Value.TimeOfDay.ToString(@"hh\:mm\:ss"),
+                    EndTime = dtpend.Value.TimeOfDay.ToString(@"hh\:mm\:ss")
                 };
             }
         }
@@ -77,7 +109,6 @@ namespace RobinsonMallLinkingWBOX
 
         }
 
-
         public static string HOST { get => host; set => host = value.ToString(); }
         public static string USERNAME { get => uname; set => uname = value.ToString(); }
         public static string PASSWORD { get => pword; set => pword = value.ToString(); }
@@ -86,5 +117,6 @@ namespace RobinsonMallLinkingWBOX
         public static string TERMINALNO { get => terno; set => terno = value.ToString(); }
         public static string TEMPMDB { get => tempmdb; set => tempmdb = value.ToString(); } 
         public static string SSH { get => ssh; set => ssh = value.ToString(); }
+
     }
 }

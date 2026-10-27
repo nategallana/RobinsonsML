@@ -52,12 +52,21 @@ namespace RobinsonMallLinkingWBOX
             this.label3 = new System.Windows.Forms.Label();
             this.txtHost = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
+            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.txtsecpass = new System.Windows.Forms.TextBox();
+            this.label12 = new System.Windows.Forms.Label();
+            this.dtpend = new System.Windows.Forms.DateTimePicker();
+            this.dtpstart = new System.Windows.Forms.DateTimePicker();
+            this.label10 = new System.Windows.Forms.Label();
+            this.label11 = new System.Windows.Forms.Label();
             this.btnSave = new System.Windows.Forms.Button();
             this.panel5 = new System.Windows.Forms.Panel();
+            this.realTimeSource1 = new DevExpress.Data.RealTimeSource();
             this.tabControl1.SuspendLayout();
             this.tabPage3.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
+            this.tabPage4.SuspendLayout();
             this.panel5.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -66,6 +75,7 @@ namespace RobinsonMallLinkingWBOX
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Font = new System.Drawing.Font("Century Gothic", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabControl1.Location = new System.Drawing.Point(12, 12);
             this.tabControl1.Name = "tabControl1";
@@ -284,6 +294,79 @@ namespace RobinsonMallLinkingWBOX
             this.label2.TabIndex = 0;
             this.label2.Text = "Host:*";
             // 
+            // tabPage4
+            // 
+            this.tabPage4.Controls.Add(this.txtsecpass);
+            this.tabPage4.Controls.Add(this.label12);
+            this.tabPage4.Controls.Add(this.dtpend);
+            this.tabPage4.Controls.Add(this.dtpstart);
+            this.tabPage4.Controls.Add(this.label10);
+            this.tabPage4.Controls.Add(this.label11);
+            this.tabPage4.Location = new System.Drawing.Point(4, 25);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage4.Size = new System.Drawing.Size(368, 153);
+            this.tabPage4.TabIndex = 3;
+            this.tabPage4.Text = "TECH Setup";
+            this.tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // txtsecpass
+            // 
+            this.txtsecpass.Font = new System.Drawing.Font("Century Gothic", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtsecpass.Location = new System.Drawing.Point(128, 98);
+            this.txtsecpass.Name = "txtsecpass";
+            this.txtsecpass.PasswordChar = '*';
+            this.txtsecpass.Size = new System.Drawing.Size(205, 23);
+            this.txtsecpass.TabIndex = 12;
+            this.txtsecpass.UseSystemPasswordChar = true;
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Font = new System.Drawing.Font("Century Gothic", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label12.Location = new System.Drawing.Point(43, 101);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(79, 17);
+            this.label12.TabIndex = 11;
+            this.label12.Text = "Password:*";
+            // 
+            // dtpend
+            // 
+            this.dtpend.Format = System.Windows.Forms.DateTimePickerFormat.Time;
+            this.dtpend.Location = new System.Drawing.Point(128, 51);
+            this.dtpend.Name = "dtpend";
+            this.dtpend.Size = new System.Drawing.Size(85, 21);
+            this.dtpend.TabIndex = 10;
+            // 
+            // dtpstart
+            // 
+            this.dtpstart.CustomFormat = "";
+            this.dtpstart.Format = System.Windows.Forms.DateTimePickerFormat.Time;
+            this.dtpstart.Location = new System.Drawing.Point(128, 24);
+            this.dtpstart.Name = "dtpstart";
+            this.dtpstart.Size = new System.Drawing.Size(85, 21);
+            this.dtpstart.TabIndex = 9;
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Century Gothic", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label10.Location = new System.Drawing.Point(43, 55);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(75, 17);
+            this.label10.TabIndex = 8;
+            this.label10.Text = "End time:*";
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Font = new System.Drawing.Font("Century Gothic", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label11.Location = new System.Drawing.Point(43, 28);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(80, 17);
+            this.label11.TabIndex = 7;
+            this.label11.Text = "Start time:*";
+            // 
             // btnSave
             // 
             this.btnSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -310,6 +393,10 @@ namespace RobinsonMallLinkingWBOX
             this.panel5.Size = new System.Drawing.Size(119, 40);
             this.panel5.TabIndex = 39;
             // 
+            // realTimeSource1
+            // 
+            this.realTimeSource1.DisplayableProperties = null;
+            // 
             // Settings
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -329,6 +416,8 @@ namespace RobinsonMallLinkingWBOX
             this.tabPage1.PerformLayout();
             this.tabPage2.ResumeLayout(false);
             this.tabPage2.PerformLayout();
+            this.tabPage4.ResumeLayout(false);
+            this.tabPage4.PerformLayout();
             this.panel5.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -360,5 +449,13 @@ namespace RobinsonMallLinkingWBOX
         private System.Windows.Forms.Panel panel5;
         private System.Windows.Forms.TextBox txtSSHKey;
         private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.TabPage tabPage4;
+        private System.Windows.Forms.DateTimePicker dtpend;
+        private System.Windows.Forms.DateTimePicker dtpstart;
+        private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.Label label11;
+        private DevExpress.Data.RealTimeSource realTimeSource1;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.TextBox txtsecpass;
     }
 }

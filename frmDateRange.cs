@@ -2,12 +2,15 @@
 using RobinsonMallLinkingWBOX.Helpers;
 using RobinsonMallLinkingWBOX.LocalStorage;
 using RobinsonMallLinkingWBOX.Models;
+using RobMLWBOX;
+using RobMLWBOX.Helpers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -51,7 +54,9 @@ namespace RobinsonMallLinkingWBOX
         public Settings settings = null;
         SFTP sftp2 = new SFTP();
 #pragma warning disable CS0649 // Field 'frmDateRange._notifyIcon' is never assigned to, and will always have its default value null
+#pragma warning disable CS0169 // The field 'frmDateRange._notifyIcon' is never used
         private static NotifyIcon _notifyIcon;
+#pragma warning restore CS0169 // The field 'frmDateRange._notifyIcon' is never used
 #pragma warning restore CS0649 // Field 'frmDateRange._notifyIcon' is never assigned to, and will always have its default value null
         #region EODVariables
         public string EODTENTID;
@@ -84,6 +89,7 @@ namespace RobinsonMallLinkingWBOX
         public decimal EODPERCRENT;
         public decimal EODTOTAMNTREPRNT;
         public int EODNOREPRNT;
+        private decimal grossSales;
 
 
         public string LAST_DATE_MMDDYYYY;
@@ -92,6 +98,12 @@ namespace RobinsonMallLinkingWBOX
         public string YESTERDAY_YYYYMMDD;
         #endregion
         public string xml, host, username, password, dir, tenantname, terminal = null;
+        private decimal nonVat;
+        private decimal discwithVat;
+        private int otherDiscCnt;
+        private decimal nonV;
+        private decimal addscpwed;
+        private decimal forNvGross;
         public void InitializeEODValues()
         {
             EODTENTID = String.Empty;
@@ -154,17 +166,218 @@ namespace RobinsonMallLinkingWBOX
             this.Close();
         }
 
+        //private void btnGenerate_Click(object sender, EventArgs e)
+        //{
+        //    // Create and show the loading form
+        //    frmRobProcess loadingForm = new frmRobProcess();
+        //    loadingForm.Show();
+        //    loadingForm.Refresh(); // Ensures the form is drawn immediately
+        //    try
+        //    {
+        //        DateTime start = dtpFrom.Value.Date;
+        //        DateTime end = dtpTo.Value.Date;
+
+        //        for (var day = start; day <= end; day = day.AddDays(1))
+        //        {
+        //            PerformEOD(day.ToString("MMddyyyy"), day.ToString("yyyyMMdd"), day.AddDays(-1).ToString("yyyyMMdd"));
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        //MessageBox.Show($"Error: {ex.Message}\n{ex.StackTrace}", "Date Range Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+        //        ErrorLogger.LogError(ex.Message.ToString() + " || " + ex.StackTrace.ToString());
+        //    }
+        //    finally
+        //    {
+        //        // Close the loading form after process completion
+        //        loadingForm.Close();
+        //    }
+        //}
+
+        public void CheckFirstSalesData(out string firstData)
+        {
+            firstData = string.Empty;
+
+            // Attempt to get the last successful EOD date
+            DataTable accDate = eodSLSDataStorage.FirstEOD();
+
+            if (accDate != null && accDate.Rows.Count > 0)
+            {
+                DataRow row = accDate.Rows[0];
+                string lastDateRaw = row["TransDate"].ToString();
+
+                if (!string.IsNullOrWhiteSpace(lastDateRaw))
+                {
+                    try
+                    {
+                        DateTime parsedDate = DateTime.ParseExact(lastDateRaw, "MMddyyyy", CultureInfo.InvariantCulture);
+                        firstData = parsedDate.ToString("MMddyyyy");
+                    }
+                    catch (FormatException)
+                    {
+                        // Handle parsing error if necessary
+                        firstData = string.Empty;
+                    }
+                }
+            }
+        }
+
+
+        public void CheckLastSalesData(out string lastData)
+        {
+            lastData = string.Empty;
+
+            // Attempt to get the last successful EOD date
+            DataTable accDate = eodSLSDataStorage.GetDataEodDate();
+
+            if (accDate != null && accDate.Rows.Count > 0)
+            {
+                DataRow row = accDate.Rows[0];
+                string lastDateRaw = row["TransDate"].ToString();
+
+                if (!string.IsNullOrWhiteSpace(lastDateRaw))
+                {
+                    try
+                    {
+                        DateTime parsedDate = DateTime.ParseExact(lastDateRaw, "MMddyyyy", CultureInfo.InvariantCulture);
+                        lastData = parsedDate.ToString("MMddyyyy");
+                    }
+                    catch (FormatException)
+                    {
+                        // Handle parsing error if necessary
+                        lastData = string.Empty;
+                    }
+                }
+            }
+        }
 
 
         private void btnGenerate_Click(object sender, EventArgs e)
         {
+            // Retrieve the first EOD date from the eodSLSDataStorage
+            string firstEODDateStr;
+            CheckFirstSalesData(out firstEODDateStr);
 
-            DateTime start = dtpFrom.Value;
-            DateTime end = dtpTo.Value;
-
-            for(var day = start; day <= end; day = day.AddDays(1))
+            if (string.IsNullOrEmpty(firstEODDateStr))
             {
-                PerformEOD(day.ToString("MMddyyyy"), day.ToString("yyyyMMdd"), day.AddDays(-1).ToString("yyyyMMdd"));
+                MessageBox.Show("No EOD data available. Cannot proceed.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                //ErrorLogger.LogError("No EOD data available. Cannot proceed.");
+                return;
+            }
+
+            // Parse the first EOD date string to a DateTime object
+            DateTime firstEODDate;
+            try
+            {
+                firstEODDate = DateTime.ParseExact(firstEODDateStr, "MMddyyyy", CultureInfo.InvariantCulture);
+            }
+            catch (FormatException)
+            {
+                MessageBox.Show("Invalid EOD date format. Cannot proceed.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                //ErrorLogger.LogError("Invalid EOD date format. Cannot proceed.");
+                return;
+            }
+
+
+
+            // Retrieve the last EOD date from the eodSLSDataStorage
+            string lastEODDateStr;
+            CheckLastSalesData(out lastEODDateStr);
+
+            if (string.IsNullOrEmpty(lastEODDateStr))
+            {
+                MessageBox.Show("No EOD data available. Cannot proceed.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                //ErrorLogger.LogError("No EOD data available. Cannot proceed.");
+                return;
+            }
+
+            // Parse the last EOD date string to a DateTime object
+            DateTime lastEODDate;
+            try
+            {
+                lastEODDate = DateTime.ParseExact(lastEODDateStr, "MMddyyyy", CultureInfo.InvariantCulture);
+            }
+            catch (FormatException)
+            {
+                MessageBox.Show("Invalid EOD date format. Cannot proceed.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                //ErrorLogger.LogError("Invalid EOD date format. Cannot proceed.");
+                return;
+            }
+
+
+            // Create and show the loading form
+            DateTime start = dtpFrom.Value.Date;
+            DateTime end = dtpTo.Value.Date;
+
+
+            if (end < start)
+            {
+                MessageBox.Show($"Invalid Date Parameters.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Validate that the start date is not after the last EOD date
+            if (start < firstEODDate || end < firstEODDate)
+            {
+                MessageBox.Show($"Selected date range goes beyond the first available EOD date. Cannot proceed.",
+                    "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Validate that the start date is not after the last EOD date
+            if (start > lastEODDate || end > lastEODDate)
+            {
+                MessageBox.Show($"Selected date range goes beyond the last available EOD date. Cannot proceed.",
+                    "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(dir))
+            {
+                dir = GlobalVar.DIRECTORY;
+            }
+
+            if (string.IsNullOrWhiteSpace(dir) || !Directory.Exists(dir))
+            {
+                ErrorLogger.LogError($"The system cannot find the path: '{dir}'. EOD process cancelled.");
+                MessageBox.Show($"The system cannot find the path: '{dir}'\n\nEOD process has been cancelled.", "EOD Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            frmRobProcess loadingForm = new frmRobProcess();
+            loadingForm.Show();
+            loadingForm.Refresh(); // Ensures the form is drawn immediately
+
+            bool allSucceeded = true;
+
+            try
+            {
+                for (var day = start; day <= end; day = day.AddDays(1))
+                {
+                    bool success = PerformEOD(day.ToString("MMddyyyy"), day.ToString("yyyyMMdd"), day.AddDays(-1).ToString("yyyyMMdd"));
+                    if (!success)
+                    {
+                        allSucceeded = false;
+                        break;
+                    }
+                }
+
+                if (allSucceeded)
+                {
+                    MessageBox.Show("EOD Process Complete.", "EOD Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                //MessageBox.Show($"Error: {ex.Message}\n{ex.StackTrace}", "Date Range Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                ErrorLogger.LogError(ex.Message.ToString() + " || " + ex.StackTrace.ToString());
+            }
+            finally
+            {
+                // Close the loading form after process completion
+                loadingForm.Close();
             }
         }
 
@@ -189,127 +402,223 @@ namespace RobinsonMallLinkingWBOX
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"An error occurred during form load:\n{ex.Message}", "Check Settings", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                //MessageBox.Show($"An error occurred during form load:\n{ex.Message}", "Check Settings", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                ErrorLogger.LogError(ex.Message.ToString() + " || " + ex.StackTrace.ToString());
             }
         }
 
 
-
-
-        //public void Scenarios()
-        //{
-        //    DateTime now = DateTime.Now;
-
-        //    if (now.TimeOfDay >= new TimeSpan(4, 0, 0) && now.TimeOfDay < new TimeSpan(9, 0, 0))
-        //    {
-        //        MessageBox.Show("Transactions are not allowed between 4:00 AM and 9:00 AM.", "Transaction Restricted", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-
-        //        // Close the different application (e.g., "OtherApp")
-        //        string targetProcessName = "wDesktop"; // Replace with the actual process name without ".exe"
-
-        //        var processes = Process.GetProcessesByName(targetProcessName);
-        //        if (processes.Any())
-        //        {
-        //            foreach (var process in processes)
-        //            {
-        //                try
-        //                {
-        //                    process.Kill();
-        //                    process.WaitForExit();
-        //                    MessageBox.Show($"Not allowed to transact at this time.", "Application Closed", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-        //                }
-        //                catch (Exception ex)
-        //                {
-        //                    MessageBox.Show($"Failed to close the application '{targetProcessName}'. Error: {ex.Message}",
-        //                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //                }
-        //            }
-        //        }
-        //        else
-        //        {
-        //            MessageBox.Show($"No running instance of '{targetProcessName}' was found.",
-        //                            "Application Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        //        }
-        //        return;
-        //    }
-        //}
-        public void PerformEOD(string mmddyyyy, string yyyymmdd, string yesterday)
+        #region Perform EOD
+        public bool PerformEOD(string mmddyyyy, string yyyymmdd, string yesterday, bool silentMode = false)
         {
-            InitializeEODValues();
-
-            EODTENTID = tenantname;
-            EODTERMNO = terminal;
-            EODTRNSDATE = mmddyyyy;
-
-            #region Discount
-            DataTable discTABLE = transactionDataStorage.GetDISCOUNT(yyyymmdd);
-            foreach (DataRow row in discTABLE.Rows)
+            try
             {
-                EODTOTDISC = row["DiscountValue"].ToSafeDecimal();
-                EODNODISC = row["CountDiscount"].ToSafeInteger();
+                if (string.IsNullOrWhiteSpace(dir))
+                {
+                    dir = GlobalVar.DIRECTORY;
+                }
+
+                if (string.IsNullOrWhiteSpace(dir) || !Directory.Exists(dir))
+                {
+                    ErrorLogger.LogError($"The system cannot find the path: '{dir}'. EOD process cancelled.");
+                    if (!silentMode)
+                    {
+                        MessageBox.Show($"The system cannot find the path: '{dir}'\n\nEOD process has been cancelled.", "EOD Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    return false;
+                }
+
+                InitializeEODValues();
+
+                EODTENTID = tenantname;
+                EODTERMNO = terminal;
+                EODTRNSDATE = mmddyyyy;
+
+
+            #region rengiel edited
+
+            #region line 28 Buy GC
+            DataTable dtItem = itemDataStorage.getGCItem(yyyymmdd);
+            foreach (DataRow row in dtItem.Rows)
+            {
+                decimal GCamount = row["PriceAftDisc"].ToSafeDecimal();
+                if (row["MenuName"].ToString().ToUpper().Contains("GC"))
+                {
+                    EODPERCRENT = EODPERCRENT + GCamount;
+                }
             }
             #endregion
 
-            #region Void
+
+            #region line 05 06 void
+
+            DataTable dtVoid = voidDataStorage.GetVOID(yyyymmdd);
+            foreach (DataRow row in dtVoid.Rows)
+            {
+                EODTOTVOID = row["TotalVoid"].ToSafeDecimal();
+                EODNOVOID = row["CountVoid"].ToSafeInteger();
+            }
+
+            #endregion
+
+            #region getTaxAmount line 04
+            DataTable dtTax = taxDataStorage.GetTaxAmount(yyyymmdd);
+            foreach (DataRow rowTax in dtTax.Rows)
+            {
+                if (!voidDataStorage.getifVoided(Convert.ToString(rowTax["OrderNo"])))
+                {
+                    EODTOTVAT = EODTOTVAT + rowTax["Value"].ToSafeDecimal();
+                }
+            }
+            #endregion
+
+            #region getServCharge line 13
+            DataTable dtServ = transactionDataStorage.GetOrders(yyyymmdd);
+            foreach (DataRow rowServ in dtServ.Rows)
+            {
+                decimal servCharge = rowServ["ServiceCharge"].ToSafeDecimal();
+                if (!voidDataStorage.getifVoided(Convert.ToString(rowServ["OrderNo"])))
+                {
+                    EODTOTSRCHR = EODTOTSRCHR + servCharge;
+                }
+            }
+            #endregion
+
+            #region getVoidAmount and Count line 05 06
+
             DataTable voidTABLE = voidDataStorage.GetVOID(yyyymmdd);
             foreach (DataRow row in voidTABLE.Rows)
             {
                 EODTOTVOID = row["TotalVoid"].ToSafeDecimal();
                 EODNOVOID = row["CountVoid"].ToSafeInteger();
             }
+
             #endregion
+
+            #region getDiscountTotal line 08 
+            DataTable discTABLE = transactionDataStorage.GetDISCOUNT(yyyymmdd);
+            foreach (DataRow row in discTABLE.Rows)
+            {
+                if (!voidDataStorage.getifVoided(Convert.ToString(row["OrderNo"])))
+                {
+                    //EODTOTDISC = row["DiscountValue"].ToSafeDecimal();
+                    EODNODISC++;
+                }
+            }
+            #endregion
+
+            #region getSeniorPWD line 11 12 27
+            DataTable dtSeniorPWD = discountDataStorage.GetDISCOUNT(yyyymmdd);
+            foreach (DataRow row in dtSeniorPWD.Rows)
+            {
+                if (!voidDataStorage.getifVoided(Convert.ToString(row["OrderNo"])))
+                {
+                    decimal positiveAmount = row["Amount"].ToSafeDecimal() * -1M;
+                    if (row["Type"].ToString().ToUpper().Contains("SENIOR") || row["Type"].ToString().ToUpper().Contains("SCD"))
+                    {
+                        EODOTHRNEGA = EODOTHRNEGA + positiveAmount;
+                        EODNOOTHRNEGA = EODNOOTHRNEGA + 1;
+                    }
+                    if (row["Type"].ToString().ToUpper().Contains("PWD"))
+                    {
+                        EODDISABLEDISC = EODDISABLEDISC + positiveAmount;
+                    }
+                }
+            }
+            #endregion
+
+            #region getCreditSales line 22 23
+            DataTable dtPayment = paymentDataStorage.getPayment(yyyymmdd);
+            decimal notCashAmount = 0M;
+            foreach (DataRow row in dtPayment.Rows)
+            {
+                if (!voidDataStorage.getifVoided(Convert.ToString(row["OrderNo"])))
+                {
+                    if (!row["Name"].ToString().ToUpper().Contains("CASH"))
+                    {
+                        if (!row["Name"].ToString().ToUpper().Contains("GC"))
+                        {
+                            notCashAmount = notCashAmount + row["Amount"].ToSafeDecimal();
+                        }
+                    }
+                }
+            }
+            EODTOTCRDSLS = notCashAmount;
+            EODTOTCRDVAT = notCashAmount / 1.12M * 0.12M;
+
+            #endregion
+
+            #region getNonVatSales line 24
+            DataTable dtNonVat = discountDataStorage.GetDISCOUNT(yyyymmdd);
+            nonVat = 0M;
+            discwithVat = 0M;
+            otherDiscCnt = 0;
+            foreach (DataRow row in dtNonVat.Rows)
+            {
+                if (!voidDataStorage.getifVoided(Convert.ToString(row["OrderNo"])))
+                {
+                    decimal positiveAmount = row["Amount"].ToSafeDecimal() * -1M;
+                    if (row["Type"].ToString().ToUpper().Contains("SENIOR") || row["Type"].ToString().ToUpper().Contains("SCD"))
+                    {
+                        nonVat = nonVat + row["Total"].ToSafeDecimal() + positiveAmount;
+                    }
+                    else if (row["Type"].ToString().ToUpper().Contains("PWD"))
+                    {
+                        nonVat = nonVat + row["Total"].ToSafeDecimal() + positiveAmount;
+                    }
+                    else
+                    {
+                        otherDiscCnt++;
+                        discwithVat = discwithVat + positiveAmount;
+                    }
+                }
+            }
+            addscpwed = EODOTHRNEGA + EODDISABLEDISC;
+            nonV = addscpwed / 0.2M;
+            nonV = nonV - addscpwed;
+            EODTOTNONVAT = nonV;
+            forNvGross = addscpwed / 0.2M;
+            #endregion
+
+            #region getGrossSales line 03
+            grossSales = EODTOTVAT / 0.12M * 1.12M;
+            EODGROSS = grossSales + forNvGross + discwithVat;
+            #endregion
+
+            #region line 07 08 04 17
+            EODNODISC = otherDiscCnt;
+            EODTOTDISC = discwithVat;
+
+            EODTOTVAT = (EODGROSS - EODOTHRNEGA - EODTOTNONVAT - EODDISABLEDISC - EODPERCRENT) / 1.12M * 0.12M;
+            EODCRRGRNTOT = (EODGROSS - EODTOTDISC - EODOTHRNEGA - EODDISABLEDISC) + EODPRVGRNTOT;
+            #endregion
+
 
             #region GROSS VATTOTAL TOTALSERVCHARGE
             DataTable ALLdatas = transactionDataStorage.GetALLDATAS(yyyymmdd);
             foreach (DataRow row in ALLdatas.Rows)
             {
-                EODGROSS = row["Subtotal"].ToSafeDecimal(); // done
-                EODTOTVAT = row["TaxAmount"].ToSafeDecimal(); // done
-                //EODTOTVOID = row["TaxAmount"].ToSafeDecimal(); // done
-                //EODNOVOID = row["TaxAmount"].ToSafeInteger(); // done
-                //EODTOTDISC = row["DiscountValue"].ToSafeDecimal(); // done
-                //EODNODISC = row["TaxAmount"].ToSafeInteger(); // done
-                //EODTOTRFD = row["TaxAmount"].ToSafeDecimal(); no refund in wbox
-                //EODNORFD = row["TaxAmount"].ToSafeInteger(); no refund in wbox
-                //EODOTHRNEGA = row["-"].ToSafeDecimal();
-                //EODNOOTHRNEGA = row["-"].ToSafeInteger();
-                EODTOTSRCHR = row["ServiceCharge"].ToSafeDecimal(); // done
-                //EODPRVCNTR = row["TaxAmount"].ToSafeInteger(); // data yesterday // done
-                //EODPRVGRNTOT = row["TaxAmount"].ToSafeDecimal(); // data yesterday
-                //EODCRRCNTR = row[].ToSafeInteger(); // done
-                //EODCRRGRNTOT = row["TaxAmount"].ToSafeDecimal(); // done
-
-                //EODNOV = row["TaxAmount"].ToSafeDecimal();
-                //EODMISC = row["TaxAmount"].ToSafeDecimal();
-                //EODLOCTAX = row["TaxAmount"].ToSafeDecimal();
-                //EODTOTCRDSLS = row["TaxAmount"].ToSafeDecimal();
-                //EODTOTCRDVAT = row["TaxAmount"].ToSafeDecimal();
-                //EODTOTNONVAT = row["TaxAmount"].ToSafeDecimal());
-                //EODPHRMSLS = row["TaxAmount"].ToSafeDecimal();
-                //EODNONPHRMSLS = row["TaxAmount"].ToSafeDecimal());
-                //EODDISABLEDISC = row["TaxAmount"].ToSafeDecimal();
-                //EODPERCRENT = row["TaxAmount"].ToSafeDecimal();
-                //EODTOTAMNTREPRNT = row["TaxAmount"].ToSafeDecimal();
-                //EODNOREPRNT = EODNOREPRNT + 1;
-
-                //EODTRNSDATE = DateTime.Parse(row["TranscDate"].ToString());
+                EODTRNSDATE = DateTime.ParseExact(row["TranscDate"].ToString(), "yyyyMMdd", null).ToString("MMddyyyy");
             }
             #endregion
 
             #region Previous and Current Grand total
-            DataTable yestData = transactionDataStorage.GetDataYesterday(yesterday);
+
+            DateTime date = DateTime.ParseExact(yesterday, "yyyyMMdd", null);
+            string formattedYesterday = date.ToString("MMddyyyy"); // "04042025"
+            DataTable yestData = transactionDataStorage.GetDataYesterday(formattedYesterday);
             foreach (DataRow row in yestData.Rows)
             {
                 EODPRVCNTR = row["CurrEODcntr"].ToSafeInteger();
                 EODPRVGRNTOT = row["CurrGrndTot"].ToSafeDecimal();
             }
 
+            decimal eodPrvGnTot = EODPRVGRNTOT;
             EODCRRCNTR = EODPRVCNTR + 1;
-            EODCRRGRNTOT = EODPRVGRNTOT + EODGROSS;
+            EODCRRGRNTOT = EODCRRGRNTOT + EODPRVGRNTOT;
             #endregion
 
-            try
-            {
                 var EODSLS = new EODSLSData
                 {
                     TenantID = EODTENTID,
@@ -348,39 +657,362 @@ namespace RobinsonMallLinkingWBOX
 
                 string lastFourDigits = EODTENTID.Substring(EODTENTID.Length - 4);
                 string lastTransac = yyyymmdd.Substring(yyyymmdd.Length - 4);
-
                 string folderPath = dir;
                 string fileName = lastFourDigits + lastTransac + "." + EODTERMNO;
 
                 List<string> filePaths = new List<string>();
-                // Generate Fixed-Width File
                 GenerateFixedWidthFile(EODSLS, folderPath, fileName, filePaths);
 
-                int batchSize = 1; // Example: Batch size of 5
+                int batchSize = 5;
                 for (int i = 0; i < filePaths.Count; i += batchSize)
                 {
                     List<string> batchFiles = filePaths.GetRange(i, Math.Min(batchSize, filePaths.Count - i));
                     SendFilesInBatch(batchFiles);
                 }
-                CheckFileSendingStatus();
-                #region Notif
-                // Simulate sending sales file to server
-                //if (SendSalesFileToServer())
-                //{
-                //    MessageBox.Show("Sales file successfully sent to RLC server.", "EOD Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                //}
-                //else
-                //{
-                //    MessageBox.Show("Sales file is not sent to RLC server. Please contact your POS vendor.", "EOD Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                //}
-                #endregion
+
+                CheckFileSendingStatus(); //comment muna 04072025
+                return true;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}\n{ex.StackTrace}");
-                ErrorLogger.LogError($"Error: {ex.Message}\n{ex.StackTrace}");
+
+                ErrorLogger.LogError(ex.Message.ToString() + " || " + ex.StackTrace.ToString());
+                if (!silentMode)
+                {
+                    MessageBox.Show($"Error: {ex.Message}", "EOD Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                return false;
             }
         }
+        #endregion
+
+
+
+
+
+
+
+            //InitializeEODValues();
+
+            //EODTENTID = tenantname;
+            //EODTERMNO = terminal;
+            //EODTRNSDATE = mmddyyyy;
+
+
+            //#region rengiel edited
+
+            //#region getTaxAmount line 04
+            //DataTable dtTax = taxDataStorage.GetTaxAmount(yyyymmdd);
+            //foreach (DataRow rowTax in dtTax.Rows)
+            //{
+            //    if (!voidDataStorage.getifVoided(Convert.ToString(rowTax["OrderNo"])))
+            //    {
+            //        EODTOTVAT = EODTOTVAT + rowTax["Value"].ToSafeDecimal();
+            //    }
+            //}
+            //#endregion
+
+            //#region getVoidAmount and Count line 05 06
+
+            //DataTable voidTABLE = voidDataStorage.GetVOID(yyyymmdd);
+            //foreach (DataRow row in voidTABLE.Rows)
+            //{
+            //    EODTOTVOID = row["TotalVoid"].ToSafeDecimal();
+            //    EODNOVOID = row["CountVoid"].ToSafeInteger();
+            //}
+
+            //#endregion
+
+            //#region getDiscountTotal line 08 
+            //DataTable discTABLE = transactionDataStorage.GetDISCOUNT(yyyymmdd);
+            //foreach (DataRow row in discTABLE.Rows)
+            //{
+            //    //EODTOTDISC = row["DiscountValue"].ToSafeDecimal();
+            //    EODNODISC = row["CountDiscount"].ToSafeInteger();
+            //}
+            //#endregion
+
+            //#region getSeniorPWD line 11 12 27
+            //DataTable dtSeniorPWD = discountDataStorage.GetDISCOUNT(yyyymmdd);
+            //foreach (DataRow row in dtSeniorPWD.Rows)
+            //{
+            //    decimal positiveAmount = row["Amount"].ToSafeDecimal() * -1M;
+            //    if (row["Type"].ToString().ToUpper().Contains("SENIOR"))
+            //    {
+            //        EODOTHRNEGA = EODOTHRNEGA + positiveAmount;
+            //        EODNOOTHRNEGA = EODNOOTHRNEGA + 1;
+            //    }
+            //    if (row["Type"].ToString().ToUpper().Contains("PWD"))
+            //    {
+            //        EODDISABLEDISC = EODDISABLEDISC + positiveAmount;
+            //    }
+            //}
+            //#endregion
+
+            //#region getCreditSales line 22 23
+            //DataTable dtPayment = paymentDataStorage.getPayment(yyyymmdd);
+            //decimal notCashAmount = 0M;
+            //foreach (DataRow row in dtPayment.Rows)
+            //{
+            //    if (!row["Name"].ToString().ToUpper().Contains("CASH"))
+            //    {
+            //        notCashAmount = notCashAmount + row["Amount"].ToSafeDecimal();
+            //    }
+            //}
+            //EODTOTCRDSLS = notCashAmount;
+            //EODTOTCRDVAT = notCashAmount / 1.12M * 0.12M;
+
+            //#endregion
+
+            //#region getNonVatSales line 24
+            //DataTable dtNonVat = discountDataStorage.GetDISCOUNT(yyyymmdd);
+            //nonVat = 0M;
+            //foreach (DataRow row in dtNonVat.Rows)
+            //{
+            //    decimal positiveAmount = row["Amount"].ToSafeDecimal() * -1M;
+            //    if (row["Type"].ToString().ToUpper().Contains("SENIOR"))
+            //    {
+            //        nonVat = nonVat + row["Total"].ToSafeDecimal() + positiveAmount;
+            //    }
+            //    if (row["Type"].ToString().ToUpper().Contains("PWD"))
+            //    {
+            //        nonVat = nonVat + row["Total"].ToSafeDecimal() + positiveAmount;
+            //    }
+            //}
+            //EODTOTNONVAT = nonVat - EODOTHRNEGA - EODDISABLEDISC;
+            //#endregion
+
+            //#region getGrossSales line 03
+            //grossSales = EODTOTVAT / 0.12M * 1.12M;
+            //EODGROSS = grossSales + nonVat;
+            //#endregion
+
+
+            //#endregion
+
+
+            //#region GROSS VATTOTAL TOTALSERVCHARGE
+            //DataTable ALLdatas = transactionDataStorage.GetALLDATAS(yyyymmdd);
+            //foreach (DataRow row in ALLdatas.Rows)
+            //{
+
+            //    EODTRNSDATE = DateTime.ParseExact(row["TranscDate"].ToString(), "yyyyMMdd", null).ToString("MMddyyyy");
+            //}
+            //#endregion
+
+            //#region Previous and Current Grand total
+
+            //DateTime date = DateTime.ParseExact(yesterday, "yyyyMMdd", null);
+            //string formattedYesterday = date.ToString("MMddyyyy"); // "04042025"
+            //DataTable yestData = transactionDataStorage.GetDataYesterday(formattedYesterday);
+            //foreach (DataRow row in yestData.Rows)
+            //{
+            //    EODPRVCNTR = row["CurrEODcntr"].ToSafeInteger();
+            //    EODPRVGRNTOT = row["CurrGrndTot"].ToSafeDecimal();
+            //}
+
+            //decimal eodPrvGnTot = EODPRVGRNTOT;
+            //EODCRRCNTR = EODPRVCNTR + 1;
+            //EODCRRGRNTOT = EODPRVGRNTOT + EODGROSS;
+            //#endregion
+
+            //try
+            //{
+            //    var EODSLS = new EODSLSData
+            //    {
+            //        TenantID = EODTENTID,
+            //        TermNo = EODTERMNO,
+            //        Gross = Convert.ToDecimal(EODGROSS.ToDecimalPlaces(2)),
+            //        TotVat = Convert.ToDecimal(EODTOTVAT.ToDecimalPlaces(2)),
+            //        TotVoid = Convert.ToDecimal(EODTOTVOID.ToDecimalPlaces(2)),
+            //        NoVoid = EODNOVOID.ToSafeInteger(),
+            //        TotDisc = Convert.ToDecimal(EODTOTDISC.ToDecimalPlaces(2)),
+            //        NoDisc = EODNODISC.ToSafeInteger(),
+            //        TotRfnd = Convert.ToDecimal(EODTOTRFD.ToDecimalPlaces(2)),
+            //        NoRfnd = EODNORFD.ToSafeInteger(),
+            //        OthrNegaAdjst = Convert.ToDecimal(EODOTHRNEGA.ToDecimalPlaces(2)),
+            //        NoNegaAdjst = EODNOOTHRNEGA.ToSafeInteger(),
+            //        TotSrvChrg = Convert.ToDecimal(EODTOTSRCHR.ToDecimalPlaces(2)),
+            //        PrvEODcntr = EODPRVCNTR.ToSafeInteger(),
+            //        PrvGrndTot = Convert.ToDecimal(EODPRVGRNTOT.ToDecimalPlaces(2)),
+            //        CurrEODcntr = EODCRRCNTR.ToSafeInteger(),
+            //        CurrGrndTot = Convert.ToDecimal(EODCRRGRNTOT.ToDecimalPlaces(2)),
+            //        TransDate = EODTRNSDATE,
+            //        Novelty = Convert.ToDecimal(EODNOV.ToDecimalPlaces(2)),
+            //        Misc = Convert.ToDecimal(EODMISC.ToDecimalPlaces(2)),
+            //        LocTax = Convert.ToDecimal(EODLOCTAX.ToDecimalPlaces(2)),
+            //        TotCrdSls = Convert.ToDecimal(EODTOTCRDSLS.ToDecimalPlaces(2)),
+            //        TotCrdVat = Convert.ToDecimal(EODTOTCRDVAT.ToDecimalPlaces(2)),
+            //        TotNonVat = Convert.ToDecimal(EODTOTNONVAT.ToDecimalPlaces(2)),
+            //        PhrmSls = Convert.ToDecimal(EODPHRMSLS.ToDecimalPlaces(2)),
+            //        NonPhrmSls = Convert.ToDecimal(EODNONPHRMSLS.ToDecimalPlaces(2)),
+            //        DisabDisc = Convert.ToDecimal(EODDISABLEDISC.ToDecimalPlaces(2)),
+            //        PercRent = Convert.ToDecimal(EODPERCRENT.ToDecimalPlaces(2)),
+            //        TotAmntRePrnt = Convert.ToDecimal(EODTOTAMNTREPRNT.ToDecimalPlaces(2)),
+            //        NoRePrnt = EODNOREPRNT.ToSafeInteger()
+            //    };
+
+            //    eodSLSDataStorage.Add(EODSLS, false);
+
+            //    string lastFourDigits = EODTENTID.Substring(EODTENTID.Length - 4);
+            //    string lastTransac = yyyymmdd.Substring(yyyymmdd.Length - 4);
+            //    string folderPath = dir;
+            //    string fileName = lastFourDigits + lastTransac + "." + EODTERMNO;
+
+            //    List<string> filePaths = new List<string>();
+            //    GenerateFixedWidthFile(EODSLS, folderPath, fileName, filePaths);
+
+            //    int batchSize = 5;
+            //    for (int i = 0; i < filePaths.Count; i += batchSize)
+            //    {
+            //        List<string> batchFiles = filePaths.GetRange(i, Math.Min(batchSize, filePaths.Count - i));
+            //        SendFilesInBatch(batchFiles);
+            //    }
+
+            //    CheckFileSendingStatus();
+            //}
+            //catch (Exception ex)
+            //{
+            //    ErrorLogger.LogError($"EOD ERROR: {ex.Message}\n{ex.StackTrace}");
+            //    if (!silentMode)
+            //    {
+            //        MessageBox.Show($"Error: {ex.Message}", "EOD Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            //    }
+            //}
+        //}
+
+
+        //private void GenerateFixedWidthFile(EODSLSData eodData, string folderPath, string fileName, List<string> filePaths)
+        //{
+        //    //SFTP sftpClient = new SFTP();
+        //    string batchDate = DateTime.Today.ToString("MMM-dd-yyyy");
+        //    string batchTime = DateTime.Now.ToString("hh:mm:ss tt");
+
+        //    int batchCount = 0;
+        //    string status = "unsent";
+
+        //    if (!Directory.Exists(folderPath))
+        //    {
+        //        Directory.CreateDirectory(folderPath);
+        //    }
+
+
+
+        //    DataTable checkBatchFileName = batchfileDataStorage.CheckBatchFileName(); // Ensure this gets fresh data
+
+        //    bool fileExists = false;
+        //    int latestBatchCount = 0;
+
+        //    // Get the latest batch count for the matching file
+        //    var latestRow = checkBatchFileName.AsEnumerable()
+        //        .Where(row => row["FileName"].ToString().Length >= 11 &&
+        //                      row["FileName"].ToString().Substring(0, 11) == fileName) // Ensure correct file match
+        //        .OrderByDescending(row => Convert.ToInt32(row["Count"])) // Get the highest count
+        //        .FirstOrDefault();
+
+        //    if (latestRow != null)
+        //    {
+        //        latestBatchCount = Convert.ToInt32(latestRow["Count"]);
+        //    }
+
+        //    // Check if the file already exists in the DataTable
+        //    foreach (DataRow row in checkBatchFileName.Rows)
+        //    {
+        //        string existingFileName = row["FileName"].ToString(); // Example: '67890214.011'
+        //        string extractedPart = existingFileName.Length >= 11 ? existingFileName.Substring(0, 11) : existingFileName;
+        //        //int existingBatchCount = Convert.ToInt32(row["Count"]);
+
+        //        if (extractedPart == fileName)
+        //        {
+        //            fileExists = true;
+        //            batchCount = latestBatchCount + 1; // Use the latest count
+
+        //            break; // Exit the loop once the match is found
+        //        }
+        //    }
+
+
+        //    // Create or update the batch file entry
+        //    if (fileExists)
+        //    {
+        //        var batchfile = new BatchFile
+        //        {
+        //            FileName = fileName,
+        //            TransDate = batchDate,
+        //            TransTime = batchTime,
+        //            Count = batchCount,
+        //            Status = status
+        //        };
+        //        GlobalVar.batchcount = batchCount;
+        //        //batchfileDataStorage.Add(batchfile, false);
+        //    }
+        //    else
+        //    {
+        //        batchCount = 1;
+
+        //        var batchfile = new BatchFile
+        //        {
+        //            FileName = fileName,
+        //            TransDate = batchDate,
+        //            TransTime = batchTime,
+        //            Count = batchCount,
+        //            Status = status
+        //        };
+        //        GlobalVar.batchcount = batchCount;
+        //        //batchfileDataStorage.Add(batchfile, false);
+        //    }
+
+        //    // Combine folder path and file name to get the full file path
+        //    string fullFilePath = Path.Combine(folderPath, fileName + batchCount.ToString());
+
+        //    using (StreamWriter writer = new StreamWriter(fullFilePath))
+        //    {
+        //        // Define the total width for the entire line (18 characters)
+        //        const int totalWidth = 18;
+
+        //        string input = eodData.TransDate.ToString();  // MMddyyyy format
+        //        DateTime date = DateTime.ParseExact(input, "MMddyyyy", null);
+        //        string formattedDate = date.ToString("MM/dd/yyyy");
+
+
+        //        // Write each line with the field ID followed by the value, padded with zeros and formatted as needed
+        //        writer.WriteLine($"01{eodData.TenantID.PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"02{eodData.TermNo.PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"03{eodData.Gross.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"04{eodData.TotVat.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"05{eodData.TotVoid.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"06{eodData.NoVoid.ToString().PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"07{eodData.TotDisc.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"08{eodData.NoDisc.ToString().PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"09{eodData.TotRfnd.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"10{eodData.NoRfnd.ToString().PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"11{eodData.OthrNegaAdjst.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"12{eodData.NoNegaAdjst.ToString().PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"13{eodData.TotSrvChrg.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"14{eodData.PrvEODcntr.ToString().PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"15{eodData.PrvGrndTot.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"16{eodData.CurrEODcntr.ToString().PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"17{eodData.CurrGrndTot.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"18{formattedDate.PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"19{eodData.Novelty.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"20{eodData.Misc.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"21{eodData.LocTax.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"22{eodData.TotCrdSls.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"23{eodData.TotCrdVat.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"24{eodData.TotNonVat.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"25{eodData.PhrmSls.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"26{eodData.NonPhrmSls.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"27{eodData.DisabDisc.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"28{eodData.PercRent.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"29{eodData.TotAmntRePrnt.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+        //        writer.WriteLine($"30{eodData.NoRePrnt.ToString().PadLeft(totalWidth - 2, '0')}");
+
+        //    }
+        //    filePaths.Add(fullFilePath);
+        //    //sftpClient.SftpTrans(fullFilePath, host, username, password);
+        //}
+        #endregion
+
         private void GenerateFixedWidthFile(EODSLSData eodData, string folderPath, string fileName, List<string> filePaths)
         {
             string batchDate = DateTime.Today.ToString("MMM-dd-yyyy");
@@ -394,83 +1026,50 @@ namespace RobinsonMallLinkingWBOX
                 Directory.CreateDirectory(folderPath);
             }
 
-            DataTable checkBatchFileName = batchfileDataStorage.CheckBatchFileName(); // Ensure this gets fresh data
+            DataTable checkBatchFileName = batchfileDataStorage.CheckBatchFileName(); // Get current batch records
 
-            bool fileExists = false;
             int latestBatchCount = 0;
 
-            // Get the latest batch count for the matching file
-            var latestRow = checkBatchFileName.AsEnumerable()
-            .Where(row => row["FileName"].ToString().Length > 11 &&
-                          row["FileName"].ToString().Substring(0, 11) == fileName.Substring(0, 11)) // Compare first 11 characters
-            .Select(row => new
-            {
-                FileName = row["FileName"].ToString(),
-                BatchCount = row["FileName"].ToString().Substring(11) // Get the part after the first 11 characters
-            })
-            .OrderByDescending(file => Convert.ToInt32(file.BatchCount)) // Sort by batch count (converted to integer)
-            .FirstOrDefault();
-
-            if (latestRow != null)
-            {
-                // Extract the batch count from the latest file found
-                string batchCountStr = latestRow.BatchCount;
-                batchCount = batchCountStr.Length > 0 ? Convert.ToInt32(batchCountStr) + 1 : 1;
-            }
-
-            // Check if the file already exists in the DataTable
+            // Loop through filenames to find the highest batch count
             foreach (DataRow row in checkBatchFileName.Rows)
             {
-                string existingFileName = row["FileName"].ToString(); // Example: '67890214.011'
-                string extractedPart = existingFileName.Length >= 11 ? existingFileName.Substring(0, 11) : existingFileName;
+                string existingFileName = row["FileName"].ToString(); // e.g., '67890412.0112'
 
-                if (extractedPart == fileName.Substring(0, 11))
+                if (existingFileName.StartsWith(fileName)) // Match prefix
                 {
-                    fileExists = true;
-                    // Here, batchCount is already set from the logic above, no need to reset it.
-                    break; // Exit the loop once the match is found
+                    string suffix = existingFileName.Substring(fileName.Length); // Get the count portion
+                    if (int.TryParse(suffix, out int parsedCount))
+                    {
+                        if (parsedCount > latestBatchCount)
+                            latestBatchCount = parsedCount;
+                    }
                 }
             }
 
-            // Create or update the batch file entry
-            if (fileExists)
-            {
-                var batchfile = new BatchFile
-                {
-                    FileName = fileName,
-                    TransDate = batchDate,
-                    TransTime = batchTime,
-                    Count = batchCount, // Use the batch count derived from the file name
-                    Status = status
-                };
-                GlobalVar.batchcount = batchCount;
-                //batchfileDataStorage.Add(batchfile, false);
-            }
-            else
-            {
-                batchCount = 1; // Start from 1 if no existing batch is found
+            batchCount = latestBatchCount + 1; // Determine next batch count
+            GlobalVar.batchcount = batchCount;
 
-                var batchfile = new BatchFile
-                {
-                    FileName = fileName,
-                    TransDate = batchDate,
-                    TransTime = batchTime,
-                    Count = batchCount,
-                    Status = status
-                };
-                GlobalVar.batchcount = batchCount;
-                //batchfileDataStorage.Add(batchfile, false);
-            }
+            // Save batch file info
+            var batchfile = new BatchFile
+            {
+                FileName = fileName,
+                TransDate = batchDate,
+                TransTime = batchTime,
+                Count = batchCount,
+                Status = status
+            };
+            //batchfileDataStorage.Add(batchfile, false);
 
-            // Combine folder path and file name to get the full file path
+            // Generate the actual output file
             string fullFilePath = Path.Combine(folderPath, fileName + batchCount.ToString());
 
             using (StreamWriter writer = new StreamWriter(fullFilePath))
             {
-                // Define the total width for the entire line (18 characters)
                 const int totalWidth = 18;
+                string input = eodData.TransDate.ToString(); // MMddyyyy format
+                DateTime date = DateTime.ParseExact(input, "MMddyyyy", null);
+                string formattedDate = date.ToString("MM/dd/yyyy");
 
-                // Write each line with the field ID followed by the value, padded with zeros and formatted as needed
                 writer.WriteLine($"01{eodData.TenantID.PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"02{eodData.TermNo.PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"03{eodData.Gross.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
@@ -488,6 +1087,7 @@ namespace RobinsonMallLinkingWBOX
                 writer.WriteLine($"15{eodData.PrvGrndTot.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"16{eodData.CurrEODcntr.ToString().PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"17{eodData.CurrGrndTot.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
+                writer.WriteLine($"18{formattedDate.PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"19{eodData.Novelty.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"20{eodData.Misc.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"21{eodData.LocTax.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
@@ -501,9 +1101,11 @@ namespace RobinsonMallLinkingWBOX
                 writer.WriteLine($"29{eodData.TotAmntRePrnt.ToString("0.00").PadLeft(totalWidth - 2, '0')}");
                 writer.WriteLine($"30{eodData.NoRePrnt.ToString().PadLeft(totalWidth - 2, '0')}");
             }
+
             filePaths.Add(fullFilePath);
-            //sftpClient.SftpTrans(fullFilePath, host, username, password);
         }
+
+
         private void SendFilesInBatch(List<string> filePaths)
         {
             foreach (string filePath in filePaths)
@@ -534,20 +1136,6 @@ namespace RobinsonMallLinkingWBOX
 
         private void CheckFileSendingStatus()
         {
-            //if (GlobalVar.SuccessSending)
-            //{
-            //    _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Sale file Successfully sent to RLC server", ToolTipIcon.Info);
-            //    this.Close();
-            //}
-            //else if (GlobalVar.SuccessSending2 && !GlobalVar.SuccessSending)
-            //{
-            //    _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Trying to send unsent files...Successfully", ToolTipIcon.Info);
-            //}
-            //else
-            //{
-            //    _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Sales file is not sent to RLC server. Please contact your POS vendor", ToolTipIcon.Error);
-            //    //SftpConnectionChecker.StartChecking();
-            //}
 
             if (GlobalVar.SuccessSending)
             {

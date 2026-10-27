@@ -14,7 +14,7 @@ namespace RobinsonMallLinkingWBOX.Models
         public static SettingsWriter _settings = new SettingsWriter(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Application.StartupPath, "Settings"), false);
         public static Configuration _systemConfig = new Configuration();
 
-        static string XML, host, uname, pword, dir, tname, terno, tempmdb, ssh = null;
+        static string XML, host, uname, pword, dir, tname, terno, tempmdb, ssh, secpass, starttime, endtime = null;
 
         public static void InitializeConfiguration()
         {
@@ -30,8 +30,12 @@ namespace RobinsonMallLinkingWBOX.Models
                 terno = _systemConfig.TerminalNo.Trim().ToString();
                 tempmdb = _systemConfig.TempMDB.Trim().ToString();
                 ssh = _systemConfig.SSHKey.Trim().ToString();
+                secpass = _systemConfig.SecPass?.Trim();
+                starttime = _systemConfig.StartTime?.Trim();
+                endtime = _systemConfig.EndTime?.Trim();
             }
         }
+
 
         public static string XMLPath { get => XML; set => XML = value.ToString(); }
         public static string HOST { get => host; set => host = value.ToString(); }
@@ -46,6 +50,11 @@ namespace RobinsonMallLinkingWBOX.Models
         public static bool SuccessSending2 { get; set; }
         public static bool ErrorSending { get; set; }
         public static int batchcount { get; set; }
+        public static bool fromUnsent { get; set; }
+        public static string SECPASS { get => secpass; set => secpass = value?.ToString(); }
+        public static string STARTTIME { get => starttime; set => starttime = value?.ToString(); }
+        public static string ENDTIME { get => endtime; set => endtime = value?.ToString(); }
+
         public static DateTime StartDate { get; set; } 
     }
 }

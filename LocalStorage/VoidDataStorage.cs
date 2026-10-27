@@ -23,5 +23,16 @@ namespace RobinsonMallLinkingWBOX.LocalStorage
             string query = string.Format(Queries.SELECT_VOID, processDate);
             return GetDataTable(query);
         }
+
+        public Boolean getifVoided(string orderNo)
+        {
+            string query = string.Format(Queries.SELECT_TABLE_WHERE, _tableName, string.Format("(OrderID) = '{0}'", orderNo));
+            DataTable dt = GetDataTable(query);
+            if (dt != null)
+            {
+                return dt.Rows.Count > 0;
+            }
+            return false;
+        }
     }
 }

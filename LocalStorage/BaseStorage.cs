@@ -164,7 +164,7 @@ namespace RobinsonMallLinkingWBOX.LocalStorage
                         }
                     }
                 }
-                sqlite.Update(defaultTable, data, "TRN_DATE", date);
+                sqlite.Update(defaultTable, data, "TransDate", date);
             }
         }
 

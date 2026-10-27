@@ -17,7 +17,10 @@ namespace RobinsonMallLinkingWBOX
         {
             InitializeComponent();
         }
-        private string connectionString = "Data Source=RobinsonTemp.db;Version=3;";
+        //KimConnectionString
+        private string connectionString = "Data Source=C:\\Robinson\\RobinsonTemp.db;Version=3;";
+        //public string connectionString = "Data Source=RobinsonTemp.db;Version=3;";
+
         private void FileView_Load(object sender, EventArgs e)
         {
             
@@ -31,7 +34,7 @@ namespace RobinsonMallLinkingWBOX
                 try
                 {
                     conn.Open();
-                    string query = "SELECT * FROM batchfile;";
+                    string query = "Select ID, FileName, TransDate as Date, TransTime as Time, Status FROM batchfile;";
                     using (SQLiteDataAdapter adapter = new SQLiteDataAdapter(query, conn))
                     {
                         DataTable dt = new DataTable();
@@ -50,5 +53,6 @@ namespace RobinsonMallLinkingWBOX
         {
             this.Close();
         }
+
     }
 }

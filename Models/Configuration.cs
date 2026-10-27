@@ -17,5 +17,10 @@ namespace RobinsonMallLinkingWBOX.Models
         public string TerminalNo { get; set; }
         public string TempMDB { get; set; }
         public string SSHKey { get; set; }
+
+        //KIM_07042025
+        public string SecPass { get; set; } // << your textbox value
+        public string StartTime { get; set; } // << DateTimePicker Time only
+        public string EndTime { get; set; }  // << DateTimePicker Time only
     }
 }
