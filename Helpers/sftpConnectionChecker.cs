@@ -1,4 +1,4 @@
-﻿using RobinsonMallLinkingWBOX.Models;
+using RobinsonMallLinkingWBOX.Models;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -95,8 +95,8 @@ namespace RobinsonMallLinkingWBOX.Helpers
             //                    //_notifyIcon.ShowBalloonTip(3000, "Connection Established", "Connected", ToolTipIcon.Info);
             //                    if (GlobalVar.SuccessSending2 == true)
             //                    {
-            //                        MessageBox.Show("Trying to send unsent files...Successfully.", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            //                        // _notifyIcon.ShowBalloonTip(3000, "Connection Established", "Trying to send unsent files... Successfully", ToolTipIcon.Info);
+            //                        MessageBox.Show("Trying to send unsent files... successful.", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            //                        // _notifyIcon.ShowBalloonTip(3000, "Connection Established", "Trying to send unsent files... successful", ToolTipIcon.Info);
             //                    }
             //                }
             //                else
@@ -122,7 +122,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
 
             //    // Wait for a specified interval before checking again
             //    await Task.Delay(TimeSpan.FromMinutes(1), cancellationToken);
-           // }
+            // }
             //MessageBox.Show("Check");
         }
 

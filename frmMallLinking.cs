@@ -1605,7 +1605,7 @@ namespace RobinsonMallLinkingWBOX
             //}
             //else if (GlobalVar.SuccessSending2 && !GlobalVar.SuccessSending)
             //{
-            //    _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Trying to send unsent files...Successfully", ToolTipIcon.Info);
+            //    _notifyIcon.ShowBalloonTip(300, "Mall Linking", "Trying to send unsent files... successful", ToolTipIcon.Info);
             //}
             //else
             //{
@@ -1617,7 +1617,7 @@ namespace RobinsonMallLinkingWBOX
             {
                 if (GlobalVar.SuccessSending2)
                 {
-                    MessageBox.Show("Trying to send unsent files... Successfully.", "Mall Linking", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Trying to send unsent files... successful.", "Mall Linking", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
@@ -1631,12 +1631,12 @@ namespace RobinsonMallLinkingWBOX
             {
                 if (GlobalVar.SuccessSending)
                 {
-                    MessageBox.Show("Sale file successfully sent to RLC server.", "Mall Linking", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Sales file successfully sent to RLC server.", "Mall Linking", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     //this.Close();
                 }
                 //else if (GlobalVar.SuccessSending2 && !GlobalVar.SuccessSending)
                 //{
-                //    MessageBox.Show("Trying to send unsent files... Successfully.", "Mall Linking", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                //    MessageBox.Show("Trying to send unsent files... successful.", "Mall Linking", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 //}
                 else
                 {

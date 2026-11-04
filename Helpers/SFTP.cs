@@ -213,7 +213,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
                             File.Delete(filePath);
                             anyFileSent = true;
                         }
-                        // ShowMessage("Trying to send unsent files... Successfully");
+                        // ShowMessage("Trying to send unsent files... successful");
                         GlobalVar.SuccessSending2 = anyFileSent;
                         GlobalVar.ErrorSending = false;
                         GlobalVar.SuccessSending = false;
@@ -308,7 +308,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
 
             //                    }
 
-            //                    // ShowMessage("Trying to send unsent files... Successfully");
+            //                    // ShowMessage("Trying to send unsent files... successful");
             //                    GlobalVar.SuccessSending2 = true;
             //                    GlobalVar.ErrorSending = false;
             //                    GlobalVar.SuccessSending = false;
@@ -395,7 +395,7 @@ namespace RobinsonMallLinkingWBOX.Helpers
 
                                 }
 
-                                // ShowMessage("Trying to send unsent files... Successfully");
+                                // ShowMessage("Trying to send unsent files... successful");
                                 GlobalVar.SuccessSending2 = true;
                                 GlobalVar.ErrorSending = false;
                                 GlobalVar.SuccessSending = false;
