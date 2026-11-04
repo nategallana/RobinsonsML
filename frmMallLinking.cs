@@ -998,7 +998,7 @@ namespace RobinsonMallLinkingWBOX
                 frmPrevWarning frmprevwarning = new frmPrevWarning();
                 frmprevwarning.ShowDialog();
                 //DialogResult result = MessageBox.Show(
-                //"Previous’ day’s EOD was not performed.",
+                //"Previous' day’s EOD was not performed.",
                 //"EOD Check",
                 //MessageBoxButtons.OK,
                 //MessageBoxIcon.Information
